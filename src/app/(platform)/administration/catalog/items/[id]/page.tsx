@@ -16,6 +16,10 @@ import {
 import { listUnits } from "@/modules/catalog/queries";
 import { ItemLotsPanel } from "@/modules/lots/components/lots-panel";
 import { listLots } from "@/modules/lots/queries";
+import { listLocationsForOrganization } from "@/modules/locations";
+import { ItemReorderPanel } from "@/modules/reorder/components/item-reorder-panel";
+import { listReorderRules } from "@/modules/reorder/queries";
+import { listSuppliers } from "@/modules/suppliers/queries";
 
 export const metadata: Metadata = {
   title: "Item detail",
@@ -49,13 +53,25 @@ export default async function ItemDetailPage({
   }
 
   const canReadLots = can(tenant, "inventory.lots.read");
-  const [variants, conversions, identifiers, units, lots] = await Promise.all([
-    listItemVariants(id),
-    listItemConversions(id),
-    listItemIdentifiers(id),
-    listUnits({ status: "all" }),
-    canReadLots ? listLots({ itemId: id }) : Promise.resolve([]),
-  ]);
+  const canReadReorder = can(tenant, "inventory.reorder.read");
+  const [variants, conversions, identifiers, units, lots, reorderRules, locations, suppliers] =
+    await Promise.all([
+      listItemVariants(id),
+      listItemConversions(id),
+      listItemIdentifiers(id),
+      listUnits({ status: "all" }),
+      canReadLots ? listLots({ itemId: id }) : Promise.resolve([]),
+      canReadReorder ? listReorderRules({ itemId: id, status: "all" }) : Promise.resolve([]),
+      canReadReorder
+        ? listLocationsForOrganization(tenant.organizationId)
+        : Promise.resolve([]),
+      canReadReorder && can(tenant, "purchasing.read")
+        ? listSuppliers({ status: "active" })
+        : Promise.resolve([]),
+    ]);
+  const accessibleLocations = locations.filter((location) =>
+    tenant.allowedLocationIds.includes(location.id),
+  );
 
   return (
     <section className="mx-auto flex w-full max-w-5xl flex-col gap-8">
@@ -109,6 +125,20 @@ export default async function ItemDetailPage({
           variants={variants.map((variant) => ({ id: variant.id, name: variant.name }))}
           lots={lots}
           canManageLots={can(tenant, "inventory.lots.manage")}
+        />
+      ) : null}
+
+      {canReadReorder ? (
+        <ItemReorderPanel
+          itemId={item.id}
+          variants={variants.map((variant) => ({ id: variant.id, name: variant.name }))}
+          locations={accessibleLocations.map((location) => ({
+            id: location.id,
+            name: location.name,
+          }))}
+          suppliers={suppliers.map((supplier) => ({ id: supplier.id, name: supplier.name }))}
+          rules={reorderRules}
+          canManage={can(tenant, "inventory.reorder.manage")}
         />
       ) : null}
     </section>

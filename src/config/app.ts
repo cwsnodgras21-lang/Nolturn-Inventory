@@ -4,8 +4,8 @@ export const appConfig = {
   name: "Nolt Inventory",
   shortName: "Nolt",
   company: "NolTurn Solutions",
-  phase: 3.4,
-  phaseLabel: "Phase 3.4 — Recall management",
+  phase: 3.5,
+  phaseLabel: "Phase 3.5 — Reorder rules and restock planning",
 } as const;
 
 export type NavItem = {

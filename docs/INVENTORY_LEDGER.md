@@ -109,6 +109,20 @@ Recalls are operational records over lots — not a second inventory engine.
 - Ledger history is never rewritten by recall actions
 - Affected stock views filter by accessible locations for restricted members
 
+## Usable availability for restock (Phase 3.5)
+
+Restock planning reads balances but applies a stricter **usable** filter than raw on-hand:
+
+1. Sum `inventory_balances.quantity_on_hand` for the item/variant/location.
+2. Quantity-tracked rows (`lot_id` null) always count.
+3. Lot-tracked rows count only when the lot `status = 'active'` and (`expiration_date` is null or `expiration_date >= current_date`).
+4. Quarantined, depleted, expired-status, and past-dated lots do **not** count as available for reorder.
+5. Effective rule: location-specific active rule overrides the default (`location_id` null).
+6. Below minimum → low stock; `available <= 0` → out of stock.
+7. Suggested qty: fixed `reorder_quantity` when set; otherwise `max(0, target - available)`.
+
+Ledger posting and movement RPCs are unchanged — expiration still does not auto-block consumption by itself.
+
 ## Balances & reconciliation
 
 Unique key uses `UNIQUE NULLS NOT DISTINCT` on:
@@ -165,6 +179,8 @@ Per-organization counters with type prefixes:
 | `inventory.lots.manage` | Create/update lots and item tracking mode |
 | `inventory.recalls.read` | View recalls, affected lots, and recall audit history |
 | `inventory.recalls.manage` | Create/manage recalls and quarantine affected lots |
+| `inventory.reorder.read` | View reorder rules and restock suggestions |
+| `inventory.reorder.manage` | Edit reorder rules; create draft POs from restock plans (also needs `purchasing.manage`) |
 
 Draft line/header RLS requires movement permissions. Draft line insert/update also requires `user_can_access_location` for non-null source/destination (unauthorized IDs are not persisted; errors do not reveal existence). Completion and reverse RPCs re-check location access as defense in depth.
 
@@ -175,6 +191,8 @@ Purchasing role seed: Owner / Administrator / Inventory Manager / Purchasing Man
 Lots role seed: Owner / Administrator / Inventory Manager / Purchasing Manager → read/manage; Location Manager / Staff / Read Only → read.
 
 Recalls role seed: Owner / Administrator / Inventory Manager / Purchasing Manager → read/manage; Location Manager / Staff / Read Only → read.
+
+Reorder role seed: Owner / Administrator / Inventory Manager / Purchasing Manager → read/manage; Location Manager / Staff / Read Only → read.
 
 ## Inventory counts (Phase 3.1)
 

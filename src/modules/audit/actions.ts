@@ -79,6 +79,10 @@ export const AUDIT_ACTIONS = {
   INVENTORY_RECALL_LOT_ATTACHED: "inventory.recall.lot_attached",
   INVENTORY_RECALL_LOT_DETACHED: "inventory.recall.lot_detached",
   INVENTORY_RECALL_LOTS_QUARANTINED: "inventory.recall.lots_quarantined",
+  INVENTORY_REORDER_RULE_UPSERTED: "inventory.reorder_rule.upserted",
+  INVENTORY_REORDER_RULE_UPDATED: "inventory.reorder_rule.updated",
+  INVENTORY_REORDER_RULE_DELETED: "inventory.reorder_rule.deleted",
+  INVENTORY_RESTOCK_DRAFT_POS_CREATED: "inventory.restock.draft_pos_created",
 } as const;
 
 export type AuditAction = (typeof AUDIT_ACTIONS)[keyof typeof AUDIT_ACTIONS];
