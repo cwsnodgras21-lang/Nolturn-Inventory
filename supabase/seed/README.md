@@ -1,2 +1,9 @@
--- Phase 0: no seed data.
--- Demo organization seeds arrive in Phase 10 (and partial fixtures in Phase 1+).
+# Seed
+
+SQL seed files here remain minimal. Local demo data is created by:
+
+```bash
+npm run db:bootstrap
+```
+
+See `scripts/bootstrap-local.ts` for users, orgs, catalog, storage, and opening balances.
