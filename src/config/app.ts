@@ -4,8 +4,8 @@ export const appConfig = {
   name: "Nolt Inventory",
   shortName: "Nolt",
   company: "NolTurn Solutions",
-  phase: 3.6,
-  phaseLabel: "Version 1.0 RC — Phases 1–3.6",
+  phase: "P1",
+  phaseLabel: "Productization 1 — Customer onboarding",
 } as const;
 
 export type NavItem = {
@@ -23,6 +23,13 @@ export const platformNav: NavItem[] = [
     label: "Dashboard",
     description: "Operational overview",
     status: "available",
+  },
+  {
+    href: "/onboarding",
+    label: "Setup",
+    description: "Organization onboarding",
+    status: "available",
+    anyOfPermissions: ["organization.manage", "organization.read"],
   },
   {
     href: "/inventory",

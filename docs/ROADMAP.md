@@ -140,20 +140,28 @@ Phase 2.1–2.6 delivered catalog, storage, ledger, movements, and reversals.
 - [x] UI copy and consistency polish (no new business capabilities)
 - [x] Full verification suite green
 
-## Recommended Version 1.1 (do not implement in V1)
+## Productization 1 — Customer onboarding
 
-Priority order from the release review:
+- [x] Organization onboarding status + resumable multi-step wizard
+- [x] Organization details / branding (logo via private storage)
+- [x] Primary location setup
+- [x] Invitation workflow (pending/accepted/expired/revoked; local/dev accept link)
+- [x] Starter packs (blank/clinic/dental/med spa) — reference data only
+- [x] Optional demo catalog items (no balances unless explicitly chosen later via opening balance)
+- [x] CSV item import with dry-run + all-or-nothing commit
+- [x] Module selection foundation (no billing enforcement)
+- [x] Dashboard setup progress + checklist
+- [x] Audit events, RLS, tests, documentation (`docs/ONBOARDING.md`)
 
-1. Membership/role admin UI + audit completeness
-2. Alert notification delivery (email first)
-3. Stripe billing
-4. Nolt Intelligence (read-only recommendations)
-5. FEFO picking guidance
-6. Demand forecasting
-7. Serial numbers
-8. Mobile barcode scanning
-9. PandaDoc
-10. Vendor portals / OCR invoice processing
+## Recommended next (do not implement here)
+
+1. Production invitation email delivery
+2. Role assignment admin UI beyond invitations
+3. Alert notification delivery (email first)
+4. Stripe billing / entitlement enforcement
+5. Full module runtime enforcement (nav + server actions)
+6. Nolt Intelligence (read-only recommendations)
+7. FEFO / forecasting / serials / barcode / PandaDoc / vendor portals / OCR
 
 ## Phase 3 (remaining)
 
@@ -172,10 +180,10 @@ Priority order from the release review:
 
 ## Phase 5 — Module framework
 
-- Module registry and activation
-- Settings, dependencies, permissions
-- Navigation and dashboard contributions
-- Server-side module enforcement
+- [x] Module registry tables + onboarding enablement (Productization 1 foundation)
+- Settings schemas, dependencies UI polish
+- Navigation and dashboard contributions from modules
+- Server-side module enforcement on actions/APIs
 - Register `industry.clinic` contract
 
 ## Phase 6 — Clinic module MVP
@@ -211,7 +219,8 @@ Priority order from the release review:
 
 ## Phase 10 — Production readiness
 
-- Onboarding wizard, demo org, imports/exports
+- [x] Onboarding wizard + starter packs + CSV item import (Productization 1)
+- Production invitation email delivery
 - Notifications, observability, error tracking
 - Security / accessibility / performance reviews
 - Backup/restore and retention documentation

@@ -1,7 +1,7 @@
 # Module system
 
 **Last reviewed:** 2026-08-02  
-**Status:** Design documented. Registry implementation is Phase 5.
+**Status:** Configuration foundation shipped in Productization 1. Full runtime enforcement remains Phase 5.
 
 ## Purpose
 
@@ -38,15 +38,15 @@ interface ProductModuleDefinition {
 }
 ```
 
-## Persistence (planned)
+## Persistence
 
 ```text
-module_definitions
-organization_modules
-organization_module_settings
+module_definitions          -- global first-party catalog (implemented)
+organization_modules        -- per-tenant enabled/disabled + settings jsonb (implemented)
+organization_module_settings -- reserved for richer settings (not yet split out)
 ```
 
-Organization module records track status, configuration, entitlement, version, and migration state.
+Organization module records track status and settings. Entitlement/billing enforcement is deferred.
 
 ## Enforcement rules
 

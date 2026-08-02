@@ -87,6 +87,19 @@ export const AUDIT_ACTIONS = {
   ALERTS_SYNCED: "alerts.synced",
   ALERTS_ACKNOWLEDGED: "alerts.acknowledged",
   ALERTS_RESOLVED: "alerts.resolved",
+  ONBOARDING_STARTED: "onboarding.started",
+  ONBOARDING_DETAILS_SAVED: "onboarding.details_saved",
+  ONBOARDING_LOCATION_SAVED: "onboarding.location_saved",
+  ONBOARDING_STEP_SKIPPED: "onboarding.step_skipped",
+  ONBOARDING_STARTER_APPLIED: "onboarding.starter_applied",
+  ONBOARDING_MODULES_UPDATED: "onboarding.modules_updated",
+  ONBOARDING_COMPLETED: "onboarding.completed",
+  MEMBERSHIP_INVITATION_CREATED: "membership.invitation_created",
+  MEMBERSHIP_INVITATION_ACCEPTED: "membership.invitation_accepted",
+  MEMBERSHIP_INVITATION_REVOKED: "membership.invitation_revoked",
+  ORGANIZATION_LOGO_UPDATED: "organization.logo_updated",
+  CATALOG_IMPORT_VALIDATED: "catalog.import.validated",
+  CATALOG_IMPORT_COMMITTED: "catalog.import.committed",
 } as const;
 
 export type AuditAction = (typeof AUDIT_ACTIONS)[keyof typeof AUDIT_ACTIONS];

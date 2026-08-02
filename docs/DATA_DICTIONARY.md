@@ -1,14 +1,20 @@
 # Data dictionary
 
 **Last reviewed:** 2026-08-02  
-**Status:** Phase 3.6 schema applied
+**Status:** Productization 1 schema applied
 
 ## Implemented tables
 
 | Table | Notes |
 | --- | --- |
 | profiles | 1:1 with `auth.users`; not the tenant boundary |
-| organizations | Tenant root; unique kebab slug |
+| organizations | Tenant root; unique kebab slug; branding (`display_name`, `logo_path`, `date_format`, `currency_code`, contact fields) |
+| organization_onboarding | Resumable setup status/steps; starter pack; optional-step skip flags |
+| module_definitions | Global first-party module catalog |
+| organization_modules | Per-tenant module enablement (config/entitlement groundwork) |
+| organization_invitations | Pending/accepted/expired/revoked invites; `token_hash`; role + location mode |
+| organization_invitation_location_scopes | Restricted location grants for invitations |
+| catalog_import_batches | CSV dry-run/commit trail; all-or-nothing mode |
 | organization_memberships | Unique (org, user); location_access_mode |
 | locations | Org-scoped; `organization_id` immutable |
 | permissions | Global catalog |
@@ -68,7 +74,15 @@ See `src/lib/permissions/catalog.ts`. Includes inventory/count/purchasing/lots/r
 | `cancel_purchase_order(uuid)` | Cancel draft/submitted with zero receipts |
 | `receive_purchase_order(uuid, jsonb, text, text)` | Partial/full receive via inventory receipt completion (lot-aware) |
 | `sync_operational_alerts(uuid)` | Idempotent generate/resolve operational alerts for an organization |
+| `accept_organization_invitation(text)` | Accept invite by raw token; creates membership + role + scopes |
+| `revoke_organization_invitation(uuid)` | Revoke pending invite (`members.manage`) |
+
+## Storage buckets
+
+| Bucket | Notes |
+| --- | --- |
+| `org-logos` | Private; path `{organization_id}/logo.*`; tenant-scoped RLS; signed URLs |
 
 ## Planned (not created)
 
-Serials, patient tracing, external recall feeds, forecasting tables, notification delivery channels, purchase requests/approvals, AP, modules, billing, Nolt execution tables.
+Serials, patient tracing, external recall feeds, forecasting tables, notification delivery channels, purchase requests/approvals, AP, billing enforcement tables, Nolt execution tables.

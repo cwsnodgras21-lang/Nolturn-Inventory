@@ -2,7 +2,7 @@
 
 Multi-tenant inventory operations platform by NolTurn Solutions.
 
-**Version 1.0 Release Candidate** — Phases 1–3.6: identity, catalog, storage, ledger, movements, counts, purchasing, lots, recalls, reorder/restock, and operational alerts.
+**Productization 1** — Customer onboarding on top of the V1 inventory core (Phases 1–3.6): guided setup, invitations, starter packs, CSV item import, and module foundation.
 
 ## Local setup
 

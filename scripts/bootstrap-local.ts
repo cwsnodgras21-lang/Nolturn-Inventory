@@ -694,6 +694,26 @@ async function main() {
     await seedOpeningBalance(orgB, primaryB, "South Wellness PRIMARY");
   }
 
+  // Demo tenants are fully seeded — mark onboarding completed so dashboards stay operational.
+  const now = new Date().toISOString();
+  for (const orgId of [orgA, orgB]) {
+    const { error: onboardingError } = await admin.from("organization_onboarding").upsert({
+      organization_id: orgId,
+      status: "completed",
+      current_step: "review",
+      starter_pack: "clinic",
+      demo_data_enabled: true,
+      details_completed_at: now,
+      location_completed_at: now,
+      invite_skipped: true,
+      starter_completed_at: now,
+      catalog_skipped: true,
+      modules_completed_at: now,
+      completed_at: now,
+    });
+    if (onboardingError) throw onboardingError;
+  }
+
   await admin.from("audit_events").insert({
     organization_id: orgA,
     actor_user_id: ids["owner@nolt.local"],

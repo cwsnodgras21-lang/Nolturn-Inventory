@@ -23,8 +23,8 @@ export default function HomePage() {
             {appConfig.name}
           </h1>
           <p className="max-w-2xl text-lg leading-relaxed text-muted">
-            Secure multi-tenant inventory operations — catalog, storage, ledger movements, counts,
-            purchasing, lots, recalls, restock planning, and operational alerts.
+            Secure multi-tenant inventory operations with guided customer onboarding — from empty
+            tenant to a usable workspace without developer intervention.
           </p>
         </div>
 
@@ -37,15 +37,15 @@ export default function HomePage() {
 
         <dl className="grid gap-6 border-t border-border pt-8 sm:grid-cols-3">
           <div>
-            <dt className="text-sm font-medium text-foreground">Version 1.0 RC</dt>
+            <dt className="text-sm font-medium text-foreground">Productization 1</dt>
             <dd className="mt-1 text-sm text-muted">
-              Production-ready core through Phase 3.6 operational alerts.
+              Guided onboarding, invitations, starter packs, CSV item import, and module foundation.
             </dd>
           </div>
           <div>
-            <dt className="text-sm font-medium text-foreground">Not in V1</dt>
+            <dt className="text-sm font-medium text-foreground">Not in this phase</dt>
             <dd className="mt-1 text-sm text-muted">
-              Billing, document signing, Nolt intelligence, forecasting, and alert delivery channels.
+              Stripe billing, PandaDoc, Nolt intelligence, forecasting, and production email delivery.
             </dd>
           </div>
           <div>

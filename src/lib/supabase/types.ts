@@ -40,17 +40,31 @@ export type Database = {
         Row: {
           id: string;
           name: string;
+          display_name: string | null;
           slug: string;
           status: string;
           timezone: string;
+          logo_path: string | null;
+          date_format: string;
+          currency_code: string;
+          contact_email: string | null;
+          contact_phone: string | null;
+          contact_address: string | null;
           created_by: string | null;
         } & Timestamps;
         Insert: {
           id?: string;
           name: string;
+          display_name?: string | null;
           slug: string;
           status?: string;
           timezone?: string;
+          logo_path?: string | null;
+          date_format?: string;
+          currency_code?: string;
+          contact_email?: string | null;
+          contact_phone?: string | null;
+          contact_address?: string | null;
           created_by?: string | null;
           created_at?: string;
           updated_at?: string;
@@ -58,9 +72,16 @@ export type Database = {
         Update: {
           id?: string;
           name?: string;
+          display_name?: string | null;
           slug?: string;
           status?: string;
           timezone?: string;
+          logo_path?: string | null;
+          date_format?: string;
+          currency_code?: string;
+          contact_email?: string | null;
+          contact_phone?: string | null;
+          contact_address?: string | null;
           created_by?: string | null;
           created_at?: string;
           updated_at?: string;
@@ -1682,6 +1703,260 @@ export type Database = {
         };
         Relationships: [];
       };
+      organization_onboarding: {
+        Row: {
+          organization_id: string;
+          status: string;
+          current_step: string;
+          starter_pack: string | null;
+          demo_data_enabled: boolean;
+          details_completed_at: string | null;
+          location_completed_at: string | null;
+          invite_completed_at: string | null;
+          invite_skipped: boolean;
+          starter_completed_at: string | null;
+          catalog_completed_at: string | null;
+          catalog_skipped: boolean;
+          modules_completed_at: string | null;
+          completed_at: string | null;
+          completed_by: string | null;
+        } & Timestamps;
+        Insert: {
+          organization_id: string;
+          status?: string;
+          current_step?: string;
+          starter_pack?: string | null;
+          demo_data_enabled?: boolean;
+          details_completed_at?: string | null;
+          location_completed_at?: string | null;
+          invite_completed_at?: string | null;
+          invite_skipped?: boolean;
+          starter_completed_at?: string | null;
+          catalog_completed_at?: string | null;
+          catalog_skipped?: boolean;
+          modules_completed_at?: string | null;
+          completed_at?: string | null;
+          completed_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          organization_id?: string;
+          status?: string;
+          current_step?: string;
+          starter_pack?: string | null;
+          demo_data_enabled?: boolean;
+          details_completed_at?: string | null;
+          location_completed_at?: string | null;
+          invite_completed_at?: string | null;
+          invite_skipped?: boolean;
+          starter_completed_at?: string | null;
+          catalog_completed_at?: string | null;
+          catalog_skipped?: boolean;
+          modules_completed_at?: string | null;
+          completed_at?: string | null;
+          completed_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      module_definitions: {
+        Row: {
+          id: string;
+          name: string;
+          description: string | null;
+          version: string;
+          dependencies: string[];
+          is_core: boolean;
+          sort_order: number;
+          created_at: string;
+        };
+        Insert: {
+          id: string;
+          name: string;
+          description?: string | null;
+          version?: string;
+          dependencies?: string[];
+          is_core?: boolean;
+          sort_order?: number;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          name?: string;
+          description?: string | null;
+          version?: string;
+          dependencies?: string[];
+          is_core?: boolean;
+          sort_order?: number;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      organization_modules: {
+        Row: {
+          id: string;
+          organization_id: string;
+          module_id: string;
+          status: string;
+          enabled_at: string | null;
+          enabled_by: string | null;
+          settings: Json;
+        } & Timestamps;
+        Insert: {
+          id?: string;
+          organization_id: string;
+          module_id: string;
+          status?: string;
+          enabled_at?: string | null;
+          enabled_by?: string | null;
+          settings?: Json;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          module_id?: string;
+          status?: string;
+          enabled_at?: string | null;
+          enabled_by?: string | null;
+          settings?: Json;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      organization_invitations: {
+        Row: {
+          id: string;
+          organization_id: string;
+          email: string;
+          email_normalized: string;
+          role_id: string;
+          location_access_mode: string;
+          status: string;
+          token_hash: string;
+          invited_by: string | null;
+          expires_at: string;
+          accepted_at: string | null;
+          accepted_user_id: string | null;
+          revoked_at: string | null;
+          revoked_by: string | null;
+        } & Timestamps;
+        Insert: {
+          id?: string;
+          organization_id: string;
+          email: string;
+          role_id: string;
+          location_access_mode?: string;
+          status?: string;
+          token_hash: string;
+          invited_by?: string | null;
+          expires_at: string;
+          accepted_at?: string | null;
+          accepted_user_id?: string | null;
+          revoked_at?: string | null;
+          revoked_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          email?: string;
+          role_id?: string;
+          location_access_mode?: string;
+          status?: string;
+          token_hash?: string;
+          invited_by?: string | null;
+          expires_at?: string;
+          accepted_at?: string | null;
+          accepted_user_id?: string | null;
+          revoked_at?: string | null;
+          revoked_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      organization_invitation_location_scopes: {
+        Row: {
+          id: string;
+          invitation_id: string;
+          organization_id: string;
+          location_id: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          invitation_id: string;
+          organization_id: string;
+          location_id: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          invitation_id?: string;
+          organization_id?: string;
+          location_id?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      catalog_import_batches: {
+        Row: {
+          id: string;
+          organization_id: string;
+          status: string;
+          mode: string;
+          file_name: string | null;
+          row_count: number;
+          valid_count: number;
+          error_count: number;
+          committed_count: number;
+          preview: Json;
+          error_summary: Json;
+          created_by: string | null;
+          committed_at: string | null;
+        } & Timestamps;
+        Insert: {
+          id?: string;
+          organization_id: string;
+          status?: string;
+          mode?: string;
+          file_name?: string | null;
+          row_count?: number;
+          valid_count?: number;
+          error_count?: number;
+          committed_count?: number;
+          preview?: Json;
+          error_summary?: Json;
+          created_by?: string | null;
+          committed_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          status?: string;
+          mode?: string;
+          file_name?: string | null;
+          row_count?: number;
+          valid_count?: number;
+          error_count?: number;
+          committed_count?: number;
+          preview?: Json;
+          error_summary?: Json;
+          created_by?: string | null;
+          committed_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -1693,6 +1968,14 @@ export type Database = {
           p_correlation_id?: string;
         };
         Returns: string;
+      };
+      accept_organization_invitation: {
+        Args: { p_token: string };
+        Returns: string;
+      };
+      revoke_organization_invitation: {
+        Args: { p_invitation_id: string };
+        Returns: undefined;
       };
       complete_inventory_transaction: {
         Args: { p_transaction_id: string };
