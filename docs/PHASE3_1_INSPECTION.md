@@ -79,4 +79,5 @@ Phase 3.1 delivers count sessions with blind mode, frozen expected quantities, r
 - [x] Domain layer + audit events
 - [x] Count UI (list / new / detail)
 - [x] RLS tests + e2e smoke phase label
+- [x] `verify` / `test:rls` (80) / `test:e2e` (10) passing after INSERT…RETURNING RLS fix
 - [x] Docs updated to Phase 3.1
