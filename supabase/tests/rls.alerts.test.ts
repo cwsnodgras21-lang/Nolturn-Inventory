@@ -440,7 +440,19 @@ describe.skipIf(!enabled)("Phase 3.6 operational alerts", () => {
       .select("id")
       .single();
 
-    await client.rpc("submit_purchase_order", { p_purchase_order_id: po!.id });
+    await client.from("purchase_order_lines").insert({
+      organization_id: orgA,
+      purchase_order_id: po!.id,
+      line_number: 1,
+      item_id: itemId,
+      ordered_quantity: 5,
+      purchase_unit_id: mLUnit,
+    });
+
+    const submitted = await client.rpc("submit_purchase_order", {
+      p_purchase_order_id: po!.id,
+    });
+    expect(submitted.error).toBeNull();
 
     const { data: count } = await client
       .from("count_sessions")
