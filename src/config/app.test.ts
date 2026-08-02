@@ -55,9 +55,11 @@ describe("audit metadata sanitization", () => {
   });
 });
 
-describe("appConfig phase 3.5", () => {
-  it("reports phase 3.5 and enables purchasing nav", () => {
-    expect(appConfig.phase).toBe(3.5);
+describe("appConfig phase 3.6", () => {
+  it("reports phase 3.6 and enables alerts nav", () => {
+    expect(appConfig.phase).toBe(3.6);
+    const alerts = platformNav.find((item) => item.href === "/alerts");
+    expect(alerts?.status).toBe("available");
     const inventory = platformNav.find((item) => item.href === "/inventory");
     expect(inventory?.status).toBe("available");
     const purchasing = platformNav.find((item) => item.href === "/purchasing");

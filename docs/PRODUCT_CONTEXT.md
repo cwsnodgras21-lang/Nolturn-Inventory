@@ -1,13 +1,13 @@
 # Product context
 
 **Last reviewed:** 2026-08-02  
-**Phase:** 3.5 — Reorder rules and restock planning
+**Phase:** 3.6 — Operational alerts
 
 This document describes functionality that **exists today**. Planned work lives in [ROADMAP.md](./ROADMAP.md).
 
 ## Product purpose
 
-Nolt Inventory is a multi-tenant inventory operations platform. Phase 3.5 adds deterministic reorder rules and restock planning on top of Phase 3.4 recalls, Phase 3.3 lots, Phase 3.2 purchasing, and Phase 3.1 counts.
+Nolt Inventory is a multi-tenant inventory operations platform. Phase 3.6 adds a centralized, deterministic operational alert system on top of Phase 3.5 reorder, Phase 3.4 recalls, lots, purchasing, and counts.
 
 ## Tech stack
 
@@ -72,13 +72,22 @@ Location-scoped storage areas and optional bins.
 - Permissions `inventory.reorder.read` / `inventory.reorder.manage`
 - UI: item reorder panel, `/inventory/restock`
 
+### Operational alerts (Phase 3.6)
+
+- Centralized alerts for low/out stock, expiring/expired lots, active recalls, quarantine, overdue counts, overdue POs
+- Idempotent sync (`sync_operational_alerts`); auto-resolve when conditions clear; history retained
+- Acknowledge / manual resolve; location-scoped visibility
+- Optional `count_sessions.due_date` for overdue count alerts
+- Permissions `alerts.read` / `alerts.manage`
+- UI: `/alerts` with nav badge
+
 ## Not implemented
 
-Patient tracing/notifications, external recall feeds, FDA integrations, serials, automated FEFO, temperature monitoring, cycle-count scheduling, purchase requests/approvals, AP/payments, AI/Nolt recommendations, demand forecasting, automatic PO submission, modules, Stripe, PandaDoc.
+Patient tracing, email/SMS/push delivery, scheduled alert jobs, external recall feeds, FDA integrations, serials, automated FEFO, temperature monitoring, cycle-count scheduling, purchase requests/approvals, AP/payments, AI/Nolt recommendations, demand forecasting, automatic PO submission, modules, Stripe, PandaDoc.
 
 ## Navigation
 
-Inventory is available with `inventory.read`. Purchasing with `purchasing.read`. Lots, recalls, restock, counts, and movements remain permission-gated. Nolt remains a planned placeholder.
+Inventory is available with `inventory.read`. Purchasing with `purchasing.read`. Alerts with `alerts.read` (open-count badge in nav). Lots, recalls, restock, counts, and movements remain permission-gated. Nolt remains a planned placeholder.
 
 ## Local setup
 

@@ -66,6 +66,16 @@ Domain under `src/modules/reorder/`. Deterministic monitoring only — no AI, fo
 - Draft POs reuse the purchasing model; `restock_plan_requests` provides click idempotency.
 - Location-restricted members only see/manage location rules and suggestions for accessible locations.
 
+## Operational alerts (Phase 3.6)
+
+Domain under `src/modules/alerts/`. Request-driven sync — no delivery channels or schedulers.
+
+- `operational_alerts` stores open/acknowledged/resolved conditions with stable `condition_key`.
+- `sync_operational_alerts(organization_id)` mirrors existing reorder, lot, recall, count, and PO rules.
+- Duplicate open alerts blocked by partial unique index; cleared conditions auto-resolve.
+- Location-scoped SELECT/UPDATE; null-location alerts (e.g. active recalls) visible org-wide to readers.
+- Optional `count_sessions.due_date` enables overdue count alerts without inventing schedule heuristics.
+
 ## Assumptions
 
 1. Shared schema multi-tenancy with `organization_id` ownership.

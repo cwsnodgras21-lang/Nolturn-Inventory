@@ -22,7 +22,7 @@ export async function listCountSessions(options?: {
   let query = supabase
     .from("count_sessions")
     .select(
-      `id, organization_id, name, status, blind_count_enabled, notes, created_by, started_by, started_at,
+      `id, organization_id, name, status, blind_count_enabled, notes, due_date, created_by, started_by, started_at,
       completed_by, completed_at, created_at, updated_at,
       count_session_locations(location_id, locations(name))`,
     )
@@ -56,7 +56,7 @@ export async function getCountSession(sessionId: string): Promise<CountSession> 
   const { data, error } = await supabase
     .from("count_sessions")
     .select(
-      `id, organization_id, name, status, blind_count_enabled, notes, created_by, started_by, started_at,
+      `id, organization_id, name, status, blind_count_enabled, notes, due_date, created_by, started_by, started_at,
       completed_by, completed_at, created_at, updated_at,
       count_session_locations(location_id, locations(name))`,
     )

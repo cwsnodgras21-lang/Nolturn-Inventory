@@ -83,6 +83,9 @@ export const AUDIT_ACTIONS = {
   INVENTORY_REORDER_RULE_UPDATED: "inventory.reorder_rule.updated",
   INVENTORY_REORDER_RULE_DELETED: "inventory.reorder_rule.deleted",
   INVENTORY_RESTOCK_DRAFT_POS_CREATED: "inventory.restock.draft_pos_created",
+  ALERTS_SYNCED: "alerts.synced",
+  ALERTS_ACKNOWLEDGED: "alerts.acknowledged",
+  ALERTS_RESOLVED: "alerts.resolved",
 } as const;
 
 export type AuditAction = (typeof AUDIT_ACTIONS)[keyof typeof AUDIT_ACTIONS];
