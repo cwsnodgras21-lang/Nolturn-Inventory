@@ -91,7 +91,8 @@ describe.skipIf(!enabled)("Phase 3.1 inventory counts RLS and workflow", () => {
       .eq("item_id", dims.itemId)
       .eq("location_id", dims.locationId)
       .eq("storage_area_id", dims.storageAreaId)
-      .is("variant_id", null);
+      .is("variant_id", null)
+      .is("lot_id", null);
     query = dims.binId ? query.eq("bin_id", dims.binId) : query.is("bin_id", null);
     const { data } = await query.maybeSingle();
     return Number(data?.quantity_on_hand ?? 0);

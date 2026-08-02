@@ -694,10 +694,20 @@ describe.skipIf(!enabled)("Phase 3.3 lot tracking RLS and workflow", () => {
       .maybeSingle();
     expect(visible?.id).toBe(lot!.id);
 
-    const { error } = await readonly
+    const { data: updated, error } = await readonly
       .from("inventory_lots")
       .update({ notes: "nope" })
-      .eq("id", lot!.id);
-    expect(error).toBeTruthy();
+      .eq("id", lot!.id)
+      .select("id");
+    expect(error).toBeNull();
+    expect(updated ?? []).toHaveLength(0);
+
+    const { error: createDenied } = await readonly.from("inventory_lots").insert({
+      organization_id: orgA,
+      item_id: lotItemId,
+      lot_number: `RO-CREATE-${Date.now()}`,
+      status: "active",
+    });
+    expect(createDenied).toBeTruthy();
   });
 });

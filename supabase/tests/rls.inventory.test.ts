@@ -23,6 +23,7 @@ async function signIn(email: string, password = "password123") {
 type BalanceDims = {
   itemId: string;
   variantId?: string | null;
+  lotId?: string | null;
   locationId: string;
   storageAreaId: string;
   binId?: string | null;
@@ -143,6 +144,7 @@ describe.skipIf(!enabled)("Phase 2.5–2.6 inventory movements, reversals, and l
       .eq("location_id", dims.locationId)
       .eq("storage_area_id", dims.storageAreaId);
     query = dims.variantId ? query.eq("variant_id", dims.variantId) : query.is("variant_id", null);
+    query = dims.lotId ? query.eq("lot_id", dims.lotId) : query.is("lot_id", null);
     query = dims.binId ? query.eq("bin_id", dims.binId) : query.is("bin_id", null);
     const { data } = await query.maybeSingle();
     return Number(data?.quantity_on_hand ?? 0);
@@ -997,7 +999,7 @@ describe.skipIf(!enabled)("Phase 2.5–2.6 inventory movements, reversals, and l
   it("balance equals ledger sum and rebuild reproduces it", async () => {
     const { data: balances } = await admin
       .from("inventory_balances")
-      .select("item_id, variant_id, location_id, storage_area_id, bin_id, quantity_on_hand")
+      .select("item_id, variant_id, lot_id, location_id, storage_area_id, bin_id, quantity_on_hand")
       .eq("organization_id", orgA);
 
     for (const balance of balances ?? []) {
@@ -1012,6 +1014,7 @@ describe.skipIf(!enabled)("Phase 2.5–2.6 inventory movements, reversals, and l
       query = balance.variant_id
         ? query.eq("variant_id", balance.variant_id)
         : query.is("variant_id", null);
+      query = balance.lot_id ? query.eq("lot_id", balance.lot_id) : query.is("lot_id", null);
       query = balance.bin_id ? query.eq("bin_id", balance.bin_id) : query.is("bin_id", null);
 
       const { data: entries } = await query;
@@ -1028,7 +1031,7 @@ describe.skipIf(!enabled)("Phase 2.5–2.6 inventory movements, reversals, and l
 
     const { data: rebuilt } = await admin
       .from("inventory_balances")
-      .select("item_id, variant_id, location_id, storage_area_id, bin_id, quantity_on_hand")
+      .select("item_id, variant_id, lot_id, location_id, storage_area_id, bin_id, quantity_on_hand")
       .eq("organization_id", orgA);
 
     expect((rebuilt ?? []).length).toBe(snapshot.length);
@@ -1037,6 +1040,7 @@ describe.skipIf(!enabled)("Phase 2.5–2.6 inventory movements, reversals, and l
         (r) =>
           r.item_id === row.item_id &&
           r.variant_id === row.variant_id &&
+          r.lot_id === row.lot_id &&
           r.location_id === row.location_id &&
           r.storage_area_id === row.storage_area_id &&
           r.bin_id === row.bin_id,

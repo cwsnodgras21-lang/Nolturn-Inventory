@@ -668,7 +668,7 @@ export function TransactionWorkspace({
                         {lot.expirationDate ? ` · exp ${lot.expirationDate}` : ""}
                       </option>
                     ))}
-                    {canManageLots && (showDest || type === "receipt") ? (
+                    {canManageLots && showDest ? (
                       <option value="__new__">Create new lot…</option>
                     ) : null}
                   </select>
