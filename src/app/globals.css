@@ -1,0 +1,68 @@
+@import "tailwindcss";
+
+:root {
+  --background: #121417;
+  --foreground: #f2f3f5;
+  --surface: #1a1d22;
+  --surface-raised: #22262d;
+  --border: #2e333c;
+  --muted: #9aa3b2;
+  --accent: #e87722;
+  --accent-hover: #f08a3a;
+  --accent-muted: rgba(232, 119, 34, 0.16);
+  --danger: #e35d6a;
+  --success: #3fad7a;
+  --warning: #d4a017;
+  --ring: #e87722;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
+  --color-border: var(--border);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-muted: var(--accent-muted);
+  --color-danger: var(--danger);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-ring: var(--ring);
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+}
+
+* {
+  border-color: var(--border);
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  background:
+    radial-gradient(1200px 600px at 10% -10%, rgba(232, 119, 34, 0.08), transparent 55%),
+    radial-gradient(900px 500px at 100% 0%, rgba(154, 163, 178, 0.06), transparent 50%),
+    var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), ui-sans-serif, sans-serif;
+}
+
+::selection {
+  background: var(--accent-muted);
+  color: var(--foreground);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}

@@ -1,0 +1,2 @@
+-- Phase 0: no seed data.
+-- Demo organization seeds arrive in Phase 10 (and partial fixtures in Phase 1+).

@@ -1,0 +1,2 @@
+-- Database-level RLS tests begin in Phase 1.
+-- Critical cases: cross-tenant isolation, membership bypass attempts, location scope.
