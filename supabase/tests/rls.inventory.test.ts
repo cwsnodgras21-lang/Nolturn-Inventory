@@ -624,6 +624,7 @@ describe.skipIf(!enabled)("Phase 2.5–2.6 inventory movements, reversals, and l
 
   it("exact storage dimensions are respected for stock checks", async () => {
     const { client } = await signIn("owner@nolt.local");
+    await admin.from("items").update({ allow_negative_stock: false }).eq("id", alcoholId);
     // Stock exists with bin set; consuming with null bin must not use that stock.
     const withBin = {
       itemId: alcoholId,
@@ -631,9 +632,35 @@ describe.skipIf(!enabled)("Phase 2.5–2.6 inventory movements, reversals, and l
       storageAreaId: fridgeArea,
       binId: fridgeBin,
     };
+    const noBin = { ...withBin, binId: null as string | null };
+
+    // Drain any prior null-bin balance so the cross-dimension consume must fail.
+    const priorNoBin = await balanceQty(noBin);
+    if (priorNoBin > 0) {
+      const { data: drain } = await createDraft(client, orgA, "consumption");
+      await client.from("inventory_transaction_lines").insert({
+        organization_id: orgA,
+        transaction_id: drain!.id,
+        line_number: 1,
+        item_id: alcoholId,
+        entered_quantity: priorNoBin,
+        entered_unit_id: mLUnit,
+        conversion_multiplier: 1,
+        base_quantity: priorNoBin,
+        source_location_id: primaryA,
+        source_storage_area_id: fridgeArea,
+        source_bin_id: null,
+      });
+      const drained = await client.rpc("complete_inventory_transaction", {
+        p_transaction_id: drain!.id,
+      });
+      expect(drained.error).toBeNull();
+    }
+
     await seedStock(client, 30, { ...withBin, enteredUnitId: mLUnit });
     const beforeWithBin = await balanceQty(withBin);
-    const beforeNoBin = await balanceQty({ ...withBin, binId: null });
+    const beforeNoBin = await balanceQty(noBin);
+    expect(beforeNoBin).toBe(0);
 
     const { data: txn } = await createDraft(client, orgA, "consumption");
     await client.from("inventory_transaction_lines").insert({
@@ -654,7 +681,7 @@ describe.skipIf(!enabled)("Phase 2.5–2.6 inventory movements, reversals, and l
     });
     expect(error).toBeTruthy();
     expect(await balanceQty(withBin)).toBe(beforeWithBin);
-    expect(await balanceQty({ ...withBin, binId: null })).toBe(beforeNoBin);
+    expect(await balanceQty(noBin)).toBe(beforeNoBin);
 
     const { data: okTxn } = await createDraft(client, orgA, "consumption");
     await client.from("inventory_transaction_lines").insert({
@@ -992,7 +1019,8 @@ describe.skipIf(!enabled)("Phase 2.5–2.6 inventory movements, reversals, and l
       expect(Number(balance.quantity_on_hand)).toBe(sum);
     }
 
-    const snapshot = structuredClone(balances ?? []);
+    // Rebuild omits zero-sum dimensions (`having sum(quantity_delta) <> 0`).
+    const snapshot = (balances ?? []).filter((row) => Number(row.quantity_on_hand) !== 0);
     const { error } = await admin.rpc("rebuild_inventory_balances", {
       p_organization_id: orgA,
     });
@@ -1651,48 +1679,86 @@ describe.skipIf(!enabled)("Phase 2.5–2.6 inventory movements, reversals, and l
       destination_bin_id: fridgeBin,
     });
 
-    const { error: editCompleted } = await client
+    const { data: originalBefore } = await admin
       .from("inventory_transactions")
-      .update({ notes: "tamper" })
-      .eq("id", id);
-    expect(editCompleted).toBeTruthy();
+      .select("notes, status, reverses_transaction_id, reversed_by_transaction_id")
+      .eq("id", id)
+      .single();
 
-    const { data: reversal } = await client.rpc("reverse_inventory_transaction", {
-      p_transaction_id: id,
-      p_reason: "Immutability coverage",
-    });
+    // RLS hides completed rows from UPDATE (0 rows); assert no mutation rather than error shape.
+    await client.from("inventory_transactions").update({ notes: "tamper" }).eq("id", id);
+    const { data: afterTamper } = await admin
+      .from("inventory_transactions")
+      .select("notes")
+      .eq("id", id)
+      .single();
+    expect(afterTamper?.notes).toBe(originalBefore?.notes);
+
+    const { data: reversal, error: reverseError } = await client.rpc(
+      "reverse_inventory_transaction",
+      {
+        p_transaction_id: id,
+        p_reason: "Immutability coverage",
+      },
+    );
+    expect(reverseError).toBeNull();
     expect(reversal).toBeTruthy();
 
-    const { error: editReversed } = await client
-      .from("inventory_transactions")
-      .update({ notes: "tamper reversed" })
-      .eq("id", id);
-    expect(editReversed).toBeTruthy();
-
-    const { error: editReversal } = await client
+    await client.from("inventory_transactions").update({ notes: "tamper reversed" }).eq("id", id);
+    await client
       .from("inventory_transactions")
       .update({ notes: "tamper reversal row" })
       .eq("id", reversal!.id);
-    expect(editReversal).toBeTruthy();
-
-    const { error: unlink } = await client
+    await client
       .from("inventory_transactions")
       .update({ reverses_transaction_id: null })
       .eq("id", reversal!.id);
-    expect(unlink).toBeTruthy();
 
-    const { error: ledgerEdit } = await client
+    const { data: originalAfter } = await admin
+      .from("inventory_transactions")
+      .select("notes, status, reversed_by_transaction_id")
+      .eq("id", id)
+      .single();
+    expect(originalAfter?.status).toBe("reversed");
+    expect(originalAfter?.reversed_by_transaction_id).toBe(reversal!.id);
+    expect(originalAfter?.notes).toBe(originalBefore?.notes);
+
+    const { data: reversalAfter } = await admin
+      .from("inventory_transactions")
+      .select("notes, reverses_transaction_id, status")
+      .eq("id", reversal!.id)
+      .single();
+    expect(reversalAfter?.status).toBe("completed");
+    expect(reversalAfter?.reverses_transaction_id).toBe(id);
+    expect(reversalAfter?.notes).toBe("Immutability coverage");
+
+    const { data: ledgerBefore } = await admin
+      .from("inventory_ledger_entries")
+      .select("id, quantity_delta")
+      .eq("transaction_id", id);
+    await client
       .from("inventory_ledger_entries")
       .update({ quantity_delta: 0 })
       .eq("transaction_id", id);
-    expect(ledgerEdit).toBeTruthy();
+    const { data: ledgerAfter } = await admin
+      .from("inventory_ledger_entries")
+      .select("id, quantity_delta")
+      .eq("transaction_id", id);
+    expect(ledgerAfter).toEqual(ledgerBefore);
 
-    const { error: balanceEdit } = await client
+    const dims = {
+      itemId: alcoholId,
+      locationId: primaryA,
+      storageAreaId: fridgeArea,
+      binId: fridgeBin,
+    };
+    const balanceBefore = await balanceQty(dims);
+    await client
       .from("inventory_balances")
       .update({ quantity_on_hand: 9999 })
       .eq("organization_id", orgA)
       .eq("item_id", alcoholId);
-    expect(balanceEdit).toBeTruthy();
+    expect(await balanceQty(dims)).toBe(balanceBefore);
   });
 
   it("tenants cannot create reversal drafts or set link columns directly", async () => {
@@ -1701,11 +1767,19 @@ describe.skipIf(!enabled)("Phase 2.5–2.6 inventory movements, reversals, and l
     expect(createReversal).toBeTruthy();
 
     const { data: receipt } = await createDraft(client, orgA, "receipt");
-    const { error: setLink } = await client
+    const { data: linked, error: setLink } = await client
       .from("inventory_transactions")
       .update({ reverses_transaction_id: receipt!.id })
-      .eq("id", receipt!.id);
-    expect(setLink).toBeTruthy();
+      .eq("id", receipt!.id)
+      .select("id, reverses_transaction_id");
+    // Either RLS/WITH CHECK errors or no row is returned/persisted.
+    expect(setLink || !linked?.length).toBeTruthy();
+    const { data: after } = await admin
+      .from("inventory_transactions")
+      .select("reverses_transaction_id")
+      .eq("id", receipt!.id)
+      .single();
+    expect(after?.reverses_transaction_id).toBeNull();
   });
 
   it("completion still independently validates location access", async () => {
