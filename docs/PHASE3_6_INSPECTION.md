@@ -88,3 +88,5 @@ Yes. Reorder rules, usable-balance restock suggestions, draft PO idempotency, an
 ## Completion notes
 
 Phase 3.6 adds deterministic operational alerts synced from existing domain conditions. No email/SMS/push, schedulers, Nolt, or forecasting.
+
+Verified: `db:reset`, `db:bootstrap`, `verify`, `test:rls` (118), `test:e2e` (15).
