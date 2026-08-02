@@ -329,36 +329,30 @@ alter table public.count_sessions enable row level security;
 alter table public.count_session_locations enable row level security;
 alter table public.count_lines enable row level security;
 
-create or replace function private.user_can_access_count_session(p_session_id uuid)
-returns boolean
-language sql
-stable
-security definer
-set search_path = ''
-as $$
-  select exists (
-    select 1
-    from public.count_sessions s
-    where s.id = p_session_id
-      and private.user_has_permission(s.organization_id, 'inventory.count.read')
-      and (
-        not exists (
-          select 1 from public.count_session_locations csl
-          where csl.count_session_id = s.id
-        )
-        or exists (
-          select 1 from public.count_session_locations csl
-          where csl.count_session_id = s.id
-            and private.user_can_access_location(csl.location_id)
-        )
-      )
-  );
-$$;
+grant select, insert, update, delete on public.count_sessions to authenticated;
+grant select, insert, delete on public.count_session_locations to authenticated;
+grant select, insert, update, delete on public.count_lines to authenticated;
+grant all on public.count_sessions to service_role;
+grant all on public.count_session_locations to service_role;
+grant all on public.count_lines to service_role;
 
+-- Location-scoped session visibility. Do NOT re-select count_sessions inside a
+-- helper used by this policy: INSERT…RETURNING evaluates SELECT policies against
+-- the new row, and a nested lookup of the same table fails RLS (42501).
 create policy count_sessions_select on public.count_sessions for select to authenticated
 using (
   private.user_has_permission(organization_id, 'inventory.count.read')
-  and private.user_can_access_count_session(id)
+  and (
+    not exists (
+      select 1 from public.count_session_locations csl
+      where csl.count_session_id = id
+    )
+    or exists (
+      select 1 from public.count_session_locations csl
+      where csl.count_session_id = id
+        and private.user_can_access_location(csl.location_id)
+    )
+  )
 );
 
 create policy count_sessions_insert on public.count_sessions for insert to authenticated
@@ -375,6 +369,12 @@ using (
 with check (
   private.user_has_permission(organization_id, 'inventory.count.perform')
   or private.user_has_permission(organization_id, 'inventory.count.review')
+);
+
+create policy count_sessions_delete on public.count_sessions for delete to authenticated
+using (
+  private.user_has_permission(organization_id, 'inventory.count.perform')
+  and status = 'draft'
 );
 
 create policy count_session_locations_select on public.count_session_locations for select to authenticated

@@ -31,6 +31,7 @@ Yes. Phase 2.6 closed inventory operations: movements, reversals, draft location
 | Zero balances / missing SKUs | Start snapshots existing balances; performers may add lines with expected `0` for dimensions not yet stocked |
 | Location Manager scope | Assigned locations ∩ accessible locations; cannot assign or count inaccessible locations |
 | Lots / expiration | Out of scope; count lines are item/variant/location/area/bin only |
+| `count_sessions` SELECT helper recursion | Do not call a helper that re-queries `count_sessions` from the SELECT policy — `INSERT…RETURNING` fails with 42501. Inline location scoping on the policy instead. |
 
 ## 4. Decisions
 
