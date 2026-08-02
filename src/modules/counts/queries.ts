@@ -43,7 +43,14 @@ export async function listCountSessions(options?: {
   );
 }
 
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
 export async function getCountSession(sessionId: string): Promise<CountSession> {
+  if (!UUID_RE.test(sessionId)) {
+    throw new AppError("NOT_FOUND", "Count session not found.", 404);
+  }
+
   const context = await requirePermission("inventory.count.read");
   const supabase = await createServerSupabaseClient();
   const { data, error } = await supabase
