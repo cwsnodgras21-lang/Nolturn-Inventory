@@ -1,13 +1,13 @@
 # Product context
 
 **Last reviewed:** 2026-08-02  
-**Phase:** 3.6 — Operational alerts
+**Phase:** Version 1.0 Release Candidate (through 3.6)
 
-This document describes functionality that **exists today**. Planned work lives in [ROADMAP.md](./ROADMAP.md).
+This document describes functionality that **exists today**. Planned work lives in [ROADMAP.md](./ROADMAP.md). Release readiness notes: [V1_RELEASE_REVIEW.md](./V1_RELEASE_REVIEW.md).
 
 ## Product purpose
 
-Nolt Inventory is a multi-tenant inventory operations platform. Phase 3.6 adds a centralized, deterministic operational alert system on top of Phase 3.5 reorder, Phase 3.4 recalls, lots, purchasing, and counts.
+Nolt Inventory is a multi-tenant inventory operations platform. Version 1.0 RC includes identity/tenancy, catalog, storage, ledger movements, counts, purchasing, lots, recalls, reorder/restock planning, and deterministic operational alerts.
 
 ## Tech stack
 

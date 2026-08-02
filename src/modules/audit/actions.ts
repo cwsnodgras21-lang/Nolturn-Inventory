@@ -1,5 +1,6 @@
 export const AUDIT_ACTIONS = {
   ORGANIZATION_CREATED: "organization.created",
+  ORGANIZATION_UPDATED: "organization.updated",
   MEMBERSHIP_CREATED: "membership.created",
   MEMBERSHIP_STATUS_CHANGED: "membership.status_changed",
   ROLE_ASSIGNED: "role.assigned",

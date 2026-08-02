@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { resolvePlatformContext } from "@/lib/auth/platform";
+import { can } from "@/lib/permissions";
 import { listLocationsForOrganization } from "@/modules/locations";
 
 export const metadata: Metadata = {
@@ -14,11 +16,11 @@ export default async function DashboardPage() {
   return (
     <section className="mx-auto flex w-full max-w-4xl flex-col gap-8">
       <div className="space-y-3">
-        <Badge tone="accent">Phase 1</Badge>
+        <Badge tone="accent">Version 1.0 RC</Badge>
         <h1 className="text-3xl font-semibold tracking-tight">Dashboard</h1>
         <p className="max-w-2xl text-muted">
-          Identity and tenancy foundation for {tenant.organizationName}. Inventory metrics are not
-          available yet.
+          Operational home for {tenant.organizationName}. Use the navigation for inventory,
+          purchasing, and alerts.
         </p>
       </div>
 
@@ -50,14 +52,32 @@ export default async function DashboardPage() {
         </div>
       </dl>
 
+      <div className="flex flex-wrap gap-2">
+        {can(tenant, "inventory.read") ? (
+          <Button href="/inventory" variant="secondary">
+            Inventory
+          </Button>
+        ) : null}
+        {can(tenant, "purchasing.read") ? (
+          <Button href="/purchasing" variant="secondary">
+            Purchasing
+          </Button>
+        ) : null}
+        {can(tenant, "alerts.read") ? (
+          <Button href="/alerts" variant="secondary">
+            Alerts
+          </Button>
+        ) : null}
+      </div>
+
       <div className="border border-border bg-surface p-4">
-        <h2 className="text-sm font-semibold">Phase 1 setup status</h2>
+        <h2 className="text-sm font-semibold">Session status</h2>
         <ul className="mt-3 space-y-1 text-sm text-muted">
           <li>Authentication: active</li>
           <li>Tenant context: resolved</li>
           <li>Permissions: {tenant.permissionKeys.length} granted</li>
           <li>Accessible locations: {locations.length}</li>
-          <li>Nolt intelligence: not implemented</li>
+          <li>Nolt intelligence: planned (Phase 7)</li>
         </ul>
       </div>
     </section>

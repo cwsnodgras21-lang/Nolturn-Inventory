@@ -124,6 +124,16 @@ export async function updateOrganizationAction(raw: unknown): Promise<ActionResu
       throw new AppError("INTERNAL", "Unable to update organization.", 500);
     }
 
+    await writeAuditEvent({
+      organizationId: context.organizationId,
+      actorUserId: context.userId,
+      action: AUDIT_ACTIONS.ORGANIZATION_UPDATED,
+      entityType: "organization",
+      entityId: context.organizationId,
+      summary: "Organization profile updated",
+      metadata: input as Record<string, unknown>,
+    });
+
     revalidatePath("/administration");
     return { ok: true, data: undefined };
   } catch (error) {

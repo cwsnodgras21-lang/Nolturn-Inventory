@@ -45,10 +45,10 @@ export function StockBalancesTable({ balances }: { balances: InventoryBalance[] 
               <td colSpan={7} className="px-3 py-8 text-center text-muted">
                 No stock balances yet.{" "}
                 <Link
-                  href="/inventory/transactions/new"
+                  href="/inventory/adjust"
                   className="text-accent underline-offset-2 hover:underline"
                 >
-                  Create an opening balance
+                  Record an opening balance
                 </Link>
                 .
               </td>

@@ -1,7 +1,7 @@
 # Security model
 
 **Last reviewed:** 2026-08-02  
-**Status:** Phase 2.6 enforced
+**Status:** Version 1.0 RC (Phases 1–3.6)
 
 ## Authentication
 
@@ -19,9 +19,19 @@
 
 | Domain | Permissions |
 | --- | --- |
+| Organization | `organization.read` / `organization.manage` |
+| Members / roles | `members.*` / `roles.*` |
+| Locations | `locations.read` / `locations.manage` |
+| Audit / settings | `audit.read` / `settings.*` |
 | Catalog | `catalog.read` / `catalog.manage` |
 | Storage | `inventory.storage.read` / `inventory.storage.manage` + location access |
-| Inventory | `inventory.read` / `inventory.adjust` / `inventory.receive` / `inventory.consume` / `inventory.transfer` / `inventory.reverse` + location access on affected sides |
+| Inventory | `inventory.read` / `inventory.adjust` / `inventory.receive` / `inventory.consume` / `inventory.transfer` / `inventory.reverse` + location access |
+| Counts | `inventory.count.read` / `perform` / `review` + location access |
+| Purchasing | `purchasing.read` / `manage` / `receive` + ship-to location access |
+| Lots | `inventory.lots.read` / `inventory.lots.manage` |
+| Recalls | `inventory.recalls.read` / `inventory.recalls.manage` |
+| Reorder | `inventory.reorder.read` / `inventory.reorder.manage` |
+| Alerts | `alerts.read` / `alerts.manage` |
 
 ## Tenant resolution
 
@@ -37,39 +47,16 @@
 - `user_has_permission(organization_id, permission_key)`
 - `user_can_access_location(location_id)`
 
-`complete_inventory_transaction` and `reverse_inventory_transaction` are security definer and re-check permissions + location access inside the database transaction.
+Mutating SECURITY DEFINER RPCs (complete/reverse inventory, count lifecycle, PO submit/cancel/receive, recall quarantine, alert sync) re-check permissions and, where applicable, location access inside the database transaction.
 
-Draft line insert/update RLS requires accessible source/destination locations (unauthorized IDs are not persisted; same generic failure as inaccessible). Completion and reverse remain defense in depth.
+All public application tables enable RLS; Phase 3+ tables also FORCE RLS (V1 RC hardening).
 
-Tenants cannot insert `transaction_type = reversal` or set `reverses_transaction_id` / `reversed_by_transaction_id` via RLS; only the reverse RPC may create those links.
+## Service role
 
-`rebuild_inventory_balances` and `reconcile_inventory_balances` require `inventory.adjust` for authenticated callers.
-
-## Service-role usage
-
-| Use | Why |
-| --- | --- |
-| `scripts/bootstrap-local.ts` | Create Auth users + seed demo data locally |
-| Future webhooks / support grants | Trusted server jobs only |
-
-Never imported by Client Components (`import "server-only"`).
+- `createServiceRoleClient` is `server-only`
+- Approved uses: local bootstrap script and RLS test harness
+- Never import from Client Components or expose via `NEXT_PUBLIC_*`
 
 ## Audit
 
-Append-only `audit_events`. Inventory events include `inventory.transaction.*` (including `inventory.transaction.reversed`), line add/remove, and type-specific completion keys (`inventory.receipt.completed`, `inventory.consumption.completed`, `inventory.transfer.completed`, `inventory.negative_adjustment.completed`).
-
-## Threat mitigations
-
-| Threat | Mitigation |
-| --- | --- |
-| Cross-tenant access | RLS + membership checks |
-| Client-supplied org/location IDs | Revalidated every request + location helper |
-| Duplicate stock posts | Header row lock + completed-status guard |
-| Duplicate reversals | Header lock + unique reverse links + status `reversed` |
-| Concurrent overspend | Balance row `FOR UPDATE` before debit |
-| Tampered base quantities | Server recalculation on complete; reverse uses stored originals |
-| Direct balance edits | No tenant write policies; ledger immutable |
-| Restricted location escape | Draft RLS + completion/reverse + app command location checks |
-| Negative stock bypass | Exact-dimension stock assert unless `allow_negative_stock` |
-| Unauthorized reverse | `inventory.reverse` + all affected locations accessible |
-| Service-role leakage | `server-only` + env discipline + tests |
+Application mutations write `audit_events` via `writeAuditEvent`. Membership/role administration UI is not yet shipped; those tables are RLS-protected for manage permissions.
