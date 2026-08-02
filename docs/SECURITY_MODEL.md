@@ -1,7 +1,7 @@
 # Security model
 
 **Last reviewed:** 2026-08-02  
-**Status:** Version 1.0 RC (Phases 1–3.6)
+**Status:** Productization 1 (onboarding + Phases 1–3.6)
 
 ## Authentication
 
@@ -51,12 +51,21 @@ Mutating SECURITY DEFINER RPCs (complete/reverse inventory, count lifecycle, PO 
 
 All public application tables enable RLS; Phase 3+ tables also FORCE RLS (V1 RC hardening).
 
+## Onboarding & invitations
+
+- Onboarding mutations require `organization.manage` / `locations.manage` / `catalog.manage` / `members.manage` as appropriate — no service role in the request path
+- Invitation tokens are stored as SHA-256 hashes; raw tokens are shown once (local/dev copy link)
+- `accept_organization_invitation` verifies pending status, expiry, and email match to `auth.users`
+- Logo objects live in private `org-logos`; storage RLS scopes paths to `organization_id/…`
+- Completing onboarding is gated in application code on required steps (details, location, starter, modules)
+
 ## Service role
 
 - `createServiceRoleClient` is `server-only`
 - Approved uses: local bootstrap script and RLS test harness
 - Never import from Client Components or expose via `NEXT_PUBLIC_*`
+- Normal onboarding actions must not use the service role
 
 ## Audit
 
-Application mutations write `audit_events` via `writeAuditEvent`. Membership/role administration UI is not yet shipped; those tables are RLS-protected for manage permissions.
+Application mutations write `audit_events` via `writeAuditEvent`, including onboarding, invitation, logo, and catalog import actions. Role assignment UI beyond invitations remains limited; tables stay RLS-protected for manage permissions.

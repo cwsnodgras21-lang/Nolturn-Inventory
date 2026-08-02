@@ -17,7 +17,12 @@ describe("permission catalog sync", () => {
       expect(sql).toContain(`('${key}'`);
     }
 
-    const seeded = [...sql.matchAll(/\('([a-z]+(?:\.[a-z_]+)+)',\s*'/g)].map((m) => m[1]);
+    // Match permission seed rows: ('key', 'Name', 'description', 'category')
+    const seeded = [
+      ...sql.matchAll(
+        /\('([a-z]+(?:\.[a-z_]+)+)',\s*'[^']*',\s*'[^']*',\s*'[a-z_]+'\)/g,
+      ),
+    ].map((m) => m[1]);
     const unique = [...new Set(seeded)];
     expect(unique.sort()).toEqual([...PERMISSION_KEYS].sort());
   });
@@ -55,10 +60,12 @@ describe("audit metadata sanitization", () => {
   });
 });
 
-describe("appConfig Version 1.0 RC", () => {
-  it("reports phase 3.6 capabilities and V1 RC label", () => {
-    expect(appConfig.phase).toBe(3.6);
-    expect(appConfig.phaseLabel).toContain("Version 1.0 RC");
+describe("appConfig Productization 1", () => {
+  it("reports onboarding phase label and available core nav", () => {
+    expect(appConfig.phase).toBe("P1");
+    expect(appConfig.phaseLabel).toContain("Productization 1");
+    const setup = platformNav.find((item) => item.href === "/onboarding");
+    expect(setup?.status).toBe("available");
     const alerts = platformNav.find((item) => item.href === "/alerts");
     expect(alerts?.status).toBe("available");
     const inventory = platformNav.find((item) => item.href === "/inventory");

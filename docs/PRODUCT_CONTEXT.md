@@ -1,13 +1,13 @@
 # Product context
 
 **Last reviewed:** 2026-08-02  
-**Phase:** Version 1.0 Release Candidate (through 3.6)
+**Phase:** Productization 1 — Customer onboarding (inventory core through 3.6)
 
-This document describes functionality that **exists today**. Planned work lives in [ROADMAP.md](./ROADMAP.md). Release readiness notes: [V1_RELEASE_REVIEW.md](./V1_RELEASE_REVIEW.md).
+This document describes functionality that **exists today**. Planned work lives in [ROADMAP.md](./ROADMAP.md). Release readiness notes: [V1_RELEASE_REVIEW.md](./V1_RELEASE_REVIEW.md). Onboarding details: [ONBOARDING.md](./ONBOARDING.md).
 
 ## Product purpose
 
-Nolt Inventory is a multi-tenant inventory operations platform. Version 1.0 RC includes identity/tenancy, catalog, storage, ledger movements, counts, purchasing, lots, recalls, reorder/restock planning, and deterministic operational alerts.
+Nolt Inventory is a multi-tenant inventory operations platform. The inventory core (through Phase 3.6) plus Productization 1 guided onboarding lets a new customer organization become usable without developer intervention.
 
 ## Tech stack
 
@@ -18,6 +18,15 @@ Next.js 16 App Router · React 19 · TypeScript strict · Tailwind v4 · Supabas
 ### Identity & tenancy (Phase 1)
 
 Organizations, memberships, roles/permissions, locations (`all|restricted`), active organization resolution, audit foundation.
+
+### Customer onboarding (Productization 1)
+
+- Guided multi-step wizard (`/onboarding`) with resumable progress
+- Organization branding (display name, logo via private storage, timezone, date format, currency, contact)
+- Primary location setup, optional team invitations, starter packs, optional CSV item import
+- Module enablement foundation (`module_definitions` / `organization_modules`) — no billing enforcement
+- Dashboard setup progress and first recommended actions (no fake KPIs)
+- See [ONBOARDING.md](./ONBOARDING.md)
 
 ### Catalog (Phases 2.1–2.2)
 
@@ -83,11 +92,11 @@ Location-scoped storage areas and optional bins.
 
 ## Not implemented
 
-Patient tracing, email/SMS/push delivery, scheduled alert jobs, external recall feeds, FDA integrations, serials, automated FEFO, temperature monitoring, cycle-count scheduling, purchase requests/approvals, AP/payments, AI/Nolt recommendations, demand forecasting, automatic PO submission, modules, Stripe, PandaDoc.
+Patient tracing, production invitation email delivery, email/SMS/push alert delivery, scheduled alert jobs, external recall feeds, FDA integrations, serials, automated FEFO, temperature monitoring, cycle-count scheduling, purchase requests/approvals, AP/payments, AI/Nolt recommendations, demand forecasting, automatic PO submission, Stripe billing enforcement, PandaDoc, full module runtime enforcement beyond configuration groundwork.
 
 ## Navigation
 
-Inventory is available with `inventory.read`. Purchasing with `purchasing.read`. Alerts with `alerts.read` (open-count badge in nav). Lots, recalls, restock, counts, and movements remain permission-gated. Nolt remains a planned placeholder.
+Setup (`/onboarding`) with `organization.read` / `organization.manage`. Inventory with `inventory.read`. Purchasing with `purchasing.read`. Alerts with `alerts.read` (open-count badge in nav). Lots, recalls, restock, counts, and movements remain permission-gated. Nolt remains a planned placeholder.
 
 ## Local setup
 

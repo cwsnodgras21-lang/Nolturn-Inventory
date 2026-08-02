@@ -61,7 +61,7 @@ export function OrganizationPicker({ memberships }: { memberships: MembershipOpt
         setError(result.error);
         return;
       }
-      router.replace("/dashboard");
+      router.replace("/onboarding");
       router.refresh();
     });
   }

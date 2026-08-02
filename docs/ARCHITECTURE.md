@@ -1,11 +1,24 @@
 # Architecture
 
 **Last reviewed:** 2026-08-02  
-**Phase:** Version 1.0 RC (through 3.6 — Operational alerts)
+**Phase:** Productization 1 — Customer onboarding
 
 ## Intent
 
 Nolt Inventory is a **modular monolith**: one Next.js deployable with explicit domain modules, a shared Supabase Postgres schema, and tenant isolation enforced by Row Level Security.
+
+## Customer onboarding (Productization 1)
+
+Domain under `src/modules/onboarding/`.
+
+- `organization_onboarding` tracks resumable wizard progress and completion.
+- Branding columns on `organizations`; logos in private `org-logos` storage with tenant-scoped policies.
+- `organization_invitations` (+ location scopes) power invite-by-email; accept/revoke via SECURITY DEFINER RPCs checked against `auth.uid()` email and `members.manage`.
+- Starter packs are application reference data (units/categories/storage suggestions), not industry forks of core tables.
+- CSV item import validates then commits all-or-nothing into existing catalog tables (`catalog_import_batches` stores preview/audit trail).
+- `module_definitions` / `organization_modules` store enablement configuration only (billing later).
+- Dashboard surfaces setup progress; new orgs redirect into `/onboarding` after create.
+- Details: [ONBOARDING.md](./ONBOARDING.md), [MODULE_SYSTEM.md](./MODULE_SYSTEM.md).
 
 ## Catalog (Phases 2.1–2.2)
 
