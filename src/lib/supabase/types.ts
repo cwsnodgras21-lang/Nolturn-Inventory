@@ -646,9 +646,12 @@ export type Database = {
           status: string;
           notes: string | null;
           reference_text: string | null;
+          purchase_order_id: string | null;
           created_by: string | null;
           completed_by: string | null;
           completed_at: string | null;
+          reverses_transaction_id: string | null;
+          reversed_by_transaction_id: string | null;
         } & Timestamps;
         Insert: {
           id?: string;
@@ -658,9 +661,12 @@ export type Database = {
           status?: string;
           notes?: string | null;
           reference_text?: string | null;
+          purchase_order_id?: string | null;
           created_by?: string | null;
           completed_by?: string | null;
           completed_at?: string | null;
+          reverses_transaction_id?: string | null;
+          reversed_by_transaction_id?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -672,9 +678,12 @@ export type Database = {
           status?: string;
           notes?: string | null;
           reference_text?: string | null;
+          purchase_order_id?: string | null;
           created_by?: string | null;
           completed_by?: string | null;
           completed_at?: string | null;
+          reverses_transaction_id?: string | null;
+          reversed_by_transaction_id?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -700,6 +709,7 @@ export type Database = {
           source_bin_id: string | null;
           unit_cost: number | null;
           notes: string | null;
+          purchase_order_line_id: string | null;
         } & Timestamps;
         Insert: {
           id?: string;
@@ -720,6 +730,7 @@ export type Database = {
           source_bin_id?: string | null;
           unit_cost?: number | null;
           notes?: string | null;
+          purchase_order_line_id?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -742,6 +753,7 @@ export type Database = {
           source_bin_id?: string | null;
           unit_cost?: number | null;
           notes?: string | null;
+          purchase_order_line_id?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -827,6 +839,143 @@ export type Database = {
           storage_area_id?: string;
           bin_id?: string | null;
           quantity_on_hand?: number;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      count_sessions: {
+        Row: {
+          id: string;
+          organization_id: string;
+          name: string;
+          status: string;
+          blind_count_enabled: boolean;
+          notes: string | null;
+          created_by: string | null;
+          started_by: string | null;
+          started_at: string | null;
+          completed_by: string | null;
+          completed_at: string | null;
+        } & Timestamps;
+        Insert: {
+          id?: string;
+          organization_id: string;
+          name: string;
+          status?: string;
+          blind_count_enabled?: boolean;
+          notes?: string | null;
+          created_by?: string | null;
+          started_by?: string | null;
+          started_at?: string | null;
+          completed_by?: string | null;
+          completed_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          name?: string;
+          status?: string;
+          blind_count_enabled?: boolean;
+          notes?: string | null;
+          created_by?: string | null;
+          started_by?: string | null;
+          started_at?: string | null;
+          completed_by?: string | null;
+          completed_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      count_session_locations: {
+        Row: {
+          id: string;
+          organization_id: string;
+          count_session_id: string;
+          location_id: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          count_session_id: string;
+          location_id: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          count_session_id?: string;
+          location_id?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      count_lines: {
+        Row: {
+          id: string;
+          organization_id: string;
+          count_session_id: string;
+          item_id: string;
+          variant_id: string | null;
+          location_id: string;
+          storage_area_id: string;
+          bin_id: string | null;
+          expected_quantity: number;
+          counted_quantity: number | null;
+          variance: number | null;
+          status: string;
+          notes: string | null;
+          counted_by: string | null;
+          counted_at: string | null;
+          reviewed_by: string | null;
+          reviewed_at: string | null;
+          reconciliation_transaction_id: string | null;
+        } & Timestamps;
+        Insert: {
+          id?: string;
+          organization_id: string;
+          count_session_id: string;
+          item_id: string;
+          variant_id?: string | null;
+          location_id: string;
+          storage_area_id: string;
+          bin_id?: string | null;
+          expected_quantity?: number;
+          counted_quantity?: number | null;
+          variance?: number | null;
+          status?: string;
+          notes?: string | null;
+          counted_by?: string | null;
+          counted_at?: string | null;
+          reviewed_by?: string | null;
+          reviewed_at?: string | null;
+          reconciliation_transaction_id?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          count_session_id?: string;
+          item_id?: string;
+          variant_id?: string | null;
+          location_id?: string;
+          storage_area_id?: string;
+          bin_id?: string | null;
+          expected_quantity?: number;
+          counted_quantity?: number | null;
+          variance?: number | null;
+          status?: string;
+          notes?: string | null;
+          counted_by?: string | null;
+          counted_at?: string | null;
+          reviewed_by?: string | null;
+          reviewed_at?: string | null;
+          reconciliation_transaction_id?: string | null;
+          created_at?: string;
           updated_at?: string;
         };
         Relationships: [];
@@ -1038,6 +1187,212 @@ export type Database = {
         };
         Relationships: [];
       };
+      suppliers: {
+        Row: {
+          id: string;
+          organization_id: string;
+          name: string;
+          status: string;
+          email: string | null;
+          phone: string | null;
+          website: string | null;
+          account_number: string | null;
+          notes: string | null;
+          created_by: string | null;
+        } & Timestamps;
+        Insert: {
+          id?: string;
+          organization_id: string;
+          name: string;
+          status?: string;
+          email?: string | null;
+          phone?: string | null;
+          website?: string | null;
+          account_number?: string | null;
+          notes?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          name?: string;
+          status?: string;
+          email?: string | null;
+          phone?: string | null;
+          website?: string | null;
+          account_number?: string | null;
+          notes?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      supplier_contacts: {
+        Row: {
+          id: string;
+          organization_id: string;
+          supplier_id: string;
+          name: string;
+          email: string | null;
+          phone: string | null;
+          title: string | null;
+          is_primary: boolean;
+          notes: string | null;
+        } & Timestamps;
+        Insert: {
+          id?: string;
+          organization_id: string;
+          supplier_id: string;
+          name: string;
+          email?: string | null;
+          phone?: string | null;
+          title?: string | null;
+          is_primary?: boolean;
+          notes?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          supplier_id?: string;
+          name?: string;
+          email?: string | null;
+          phone?: string | null;
+          title?: string | null;
+          is_primary?: boolean;
+          notes?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      purchase_orders: {
+        Row: {
+          id: string;
+          organization_id: string;
+          supplier_id: string;
+          po_number: string;
+          status: string;
+          order_date: string;
+          expected_date: string | null;
+          ship_to_location_id: string;
+          external_reference: string | null;
+          notes: string | null;
+          created_by: string | null;
+          submitted_by: string | null;
+          submitted_at: string | null;
+          cancelled_by: string | null;
+          cancelled_at: string | null;
+        } & Timestamps;
+        Insert: {
+          id?: string;
+          organization_id: string;
+          supplier_id: string;
+          po_number?: string;
+          status?: string;
+          order_date?: string;
+          expected_date?: string | null;
+          ship_to_location_id: string;
+          external_reference?: string | null;
+          notes?: string | null;
+          created_by?: string | null;
+          submitted_by?: string | null;
+          submitted_at?: string | null;
+          cancelled_by?: string | null;
+          cancelled_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          supplier_id?: string;
+          po_number?: string;
+          status?: string;
+          order_date?: string;
+          expected_date?: string | null;
+          ship_to_location_id?: string;
+          external_reference?: string | null;
+          notes?: string | null;
+          created_by?: string | null;
+          submitted_by?: string | null;
+          submitted_at?: string | null;
+          cancelled_by?: string | null;
+          cancelled_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      purchase_order_lines: {
+        Row: {
+          id: string;
+          organization_id: string;
+          purchase_order_id: string;
+          line_number: number;
+          item_id: string;
+          variant_id: string | null;
+          ordered_quantity: number;
+          purchase_unit_id: string;
+          conversion_multiplier: number;
+          unit_cost: number | null;
+          received_quantity: number;
+          remaining_quantity: number;
+          notes: string | null;
+        } & Timestamps;
+        Insert: {
+          id?: string;
+          organization_id: string;
+          purchase_order_id: string;
+          line_number: number;
+          item_id: string;
+          variant_id?: string | null;
+          ordered_quantity: number;
+          purchase_unit_id: string;
+          conversion_multiplier?: number;
+          unit_cost?: number | null;
+          received_quantity?: number;
+          notes?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          purchase_order_id?: string;
+          line_number?: number;
+          item_id?: string;
+          variant_id?: string | null;
+          ordered_quantity?: number;
+          purchase_unit_id?: string;
+          conversion_multiplier?: number;
+          unit_cost?: number | null;
+          received_quantity?: number;
+          notes?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      purchase_order_counters: {
+        Row: {
+          organization_id: string;
+          last_number: number;
+        };
+        Insert: {
+          organization_id: string;
+          last_number?: number;
+        };
+        Update: {
+          organization_id?: string;
+          last_number?: number;
+        };
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -1066,9 +1421,77 @@ export type Database = {
           updated_at: string;
         };
       };
+      reverse_inventory_transaction: {
+        Args: { p_transaction_id: string; p_reason: string };
+        Returns: {
+          id: string;
+          organization_id: string;
+          transaction_number: string;
+          transaction_type: string;
+          status: string;
+          notes: string | null;
+          created_by: string | null;
+          completed_by: string | null;
+          completed_at: string | null;
+          reverses_transaction_id: string | null;
+          reversed_by_transaction_id: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+      };
+      reconcile_inventory_balances: {
+        Args: { p_organization_id: string };
+        Returns: {
+          item_id: string;
+          variant_id: string | null;
+          location_id: string;
+          storage_area_id: string;
+          bin_id: string | null;
+          balance_quantity: number;
+          ledger_quantity: number;
+          difference: number;
+        }[];
+      };
       rebuild_inventory_balances: {
         Args: { p_organization_id: string };
         Returns: number;
+      };
+      start_count_session: {
+        Args: { p_session_id: string };
+        Returns: Database["public"]["Tables"]["count_sessions"]["Row"];
+      };
+      submit_count_session_for_review: {
+        Args: { p_session_id: string };
+        Returns: Database["public"]["Tables"]["count_sessions"]["Row"];
+      };
+      return_count_session_for_correction: {
+        Args: { p_session_id: string };
+        Returns: Database["public"]["Tables"]["count_sessions"]["Row"];
+      };
+      review_count_line: {
+        Args: { p_line_id: string; p_decision: string };
+        Returns: Database["public"]["Tables"]["count_lines"]["Row"];
+      };
+      approve_count_session_reconciliation: {
+        Args: { p_session_id: string };
+        Returns: Database["public"]["Tables"]["count_sessions"]["Row"];
+      };
+      submit_purchase_order: {
+        Args: { p_purchase_order_id: string };
+        Returns: Database["public"]["Tables"]["purchase_orders"]["Row"];
+      };
+      cancel_purchase_order: {
+        Args: { p_purchase_order_id: string };
+        Returns: Database["public"]["Tables"]["purchase_orders"]["Row"];
+      };
+      receive_purchase_order: {
+        Args: {
+          p_purchase_order_id: string;
+          p_lines: Json;
+          p_notes?: string | null;
+          p_reference_text?: string | null;
+        };
+        Returns: Database["public"]["Tables"]["inventory_transactions"]["Row"];
       };
       current_user_has_active_membership: {
         Args: { p_organization_id: string };

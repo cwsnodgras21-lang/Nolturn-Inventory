@@ -9,6 +9,8 @@ export default defineConfig({
     environment: "node",
     include: ["src/**/*.{test,spec}.{ts,tsx}", "supabase/tests/**/*.{test,spec}.ts"],
     globals: false,
+    // RLS suites mutate shared seeded stock; keep files sequential for stable balances.
+    fileParallelism: false,
   },
   resolve: {
     alias: {

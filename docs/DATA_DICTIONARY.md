@@ -1,7 +1,7 @@
 # Data dictionary
 
 **Last reviewed:** 2026-08-02  
-**Status:** Phase 2.4 schema applied
+**Status:** Phase 3.2 schema applied
 
 ## Implemented tables
 
@@ -19,29 +19,47 @@
 | audit_events | Append-only application audit |
 | units_of_measure | Tenant units |
 | item_categories | Hierarchical categories |
-| items | Catalog masters; no quantity |
+| items | Catalog masters; no quantity; `allow_negative_stock` enforced on debit |
 | item_variants | Optional variants |
 | item_unit_conversions | Direct-to-base conversions |
 | item_identifiers | Org-unique normalized identifiers |
 | storage_areas | Nested areas within a location |
 | storage_bins | Optional bins within an area |
 | inventory_transaction_counters | Per-org transaction number sequence |
-| inventory_transactions | Draft/completed/cancelled headers |
-| inventory_transaction_lines | Entered quantities and destinations |
-| inventory_ledger_entries | Immutable signed quantity effects |
+| inventory_transactions | Draft/completed/cancelled/reversed headers; optional `purchase_order_id` |
+| inventory_transaction_lines | Entered quantities; optional `purchase_order_line_id` |
+| inventory_ledger_entries | Immutable signed quantity effects; `effect_role` |
 | inventory_balances | Rebuildable on-hand projection |
+| count_sessions | Count headers; statuses draft/in_progress/ready_for_review/completed/cancelled; blind flag |
+| count_session_locations | Assigned locations for a session |
+| count_lines | Frozen expected qty, counted qty, variance, review status, optional reconciliation txn link |
+| suppliers | Tenant suppliers; soft `active`/`inactive` |
+| supplier_contacts | Contacts for a supplier |
+| purchase_order_counters | Per-org PO number sequence |
+| purchase_orders | PO headers; ship-to location; draft/submitted/partially_received/received/cancelled |
+| purchase_order_lines | Ordered/received/remaining in purchase unit; frozen conversion multiplier |
 
 ## Permission keys
 
-See `src/lib/permissions/catalog.ts`.
+See `src/lib/permissions/catalog.ts`. Includes inventory/count keys plus `purchasing.read`, `purchasing.manage`, `purchasing.receive`.
 
 ## RPCs
 
 | Function | Purpose |
 | --- | --- |
 | `complete_inventory_transaction(uuid)` | Atomically post draft → ledger + balances |
-| `rebuild_inventory_balances(uuid)` | Recompute balances from ledger for an org |
+| `reverse_inventory_transaction(uuid, text)` | Exact inverse ledger reversal |
+| `reconcile_inventory_balances(uuid)` | Projection vs ledger mismatches |
+| `rebuild_inventory_balances(uuid)` | Recompute balances from ledger |
+| `start_count_session(uuid)` | Freeze expected quantities from balances |
+| `submit_count_session_for_review(uuid)` | Move in-progress count to review |
+| `return_count_session_for_correction(uuid)` | Return review to in-progress |
+| `review_count_line(uuid, text)` | Accept or reject a counted line |
+| `approve_count_session_reconciliation(uuid)` | Post ± adjustments via completion pipeline |
+| `submit_purchase_order(uuid)` | Draft → submitted |
+| `cancel_purchase_order(uuid)` | Cancel draft/submitted with zero receipts |
+| `receive_purchase_order(uuid, jsonb, text, text)` | Partial/full receive via inventory receipt completion |
 
 ## Planned (not created)
 
-Receipt/consumption/transfer/reversal types, lots, expiration, counts, procurement, modules, billing, Nolt execution tables.
+Lots, expiration, serials, purchase requests/approvals, AP, modules, billing, Nolt execution tables.

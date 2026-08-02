@@ -1,14 +1,16 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 import {
   addInventoryLineAction,
   cancelInventoryTransactionAction,
   completeInventoryTransactionAction,
   createInventoryTransactionAction,
   removeInventoryLineAction,
+  reverseInventoryTransactionAction,
 } from "@/modules/inventory/commands";
 import type {
   InventoryTransaction,
@@ -27,6 +29,7 @@ const TYPE_LABELS: Record<InventoryTransactionType, string> = {
   receipt: "Receive inventory",
   consumption: "Consume inventory",
   transfer: "Transfer inventory",
+  reversal: "Reversal",
 };
 
 function needsDestination(type: InventoryTransactionType) {
@@ -34,12 +37,18 @@ function needsDestination(type: InventoryTransactionType) {
     type === "opening_balance" ||
     type === "positive_adjustment" ||
     type === "receipt" ||
-    type === "transfer"
+    type === "transfer" ||
+    type === "reversal"
   );
 }
 
 function needsSource(type: InventoryTransactionType) {
-  return type === "consumption" || type === "negative_adjustment" || type === "transfer";
+  return (
+    type === "consumption" ||
+    type === "negative_adjustment" ||
+    type === "transfer" ||
+    type === "reversal"
+  );
 }
 
 export function StartMovementForm({
@@ -154,6 +163,9 @@ export function TransactionWorkspace({
   areas,
   bins,
   canManage,
+  canReverse = false,
+  linkedOriginalNumber = null,
+  linkedReversalNumber = null,
 }: {
   transaction: InventoryTransaction;
   lines: InventoryTransactionLine[];
@@ -164,16 +176,25 @@ export function TransactionWorkspace({
   areas: StorageArea[];
   bins: StorageBin[];
   canManage: boolean;
+  canReverse?: boolean;
+  linkedOriginalNumber?: string | null;
+  linkedReversalNumber?: string | null;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [message, setMessage] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [reversalReason, setReversalReason] = useState("");
 
   const type = transaction.transactionType;
-  const showDest = needsDestination(type);
-  const showSource = needsSource(type);
+  const showDest =
+    needsDestination(type) &&
+    (type !== "reversal" || lines.some((line) => line.destinationLocationId));
+  const showSource =
+    needsSource(type) &&
+    (type !== "reversal" || lines.some((line) => line.sourceLocationId));
   const isDraft = transaction.status === "draft";
+  const isReversed = transaction.status === "reversed";
 
   const [itemId, setItemId] = useState(items[0]?.id ?? "");
   const [variantId, setVariantId] = useState("");
@@ -199,26 +220,28 @@ export function TransactionWorkspace({
     () => areas.filter((area) => area.locationId === sourceLocationId),
     [areas, sourceLocationId],
   );
+  const effectiveSourceAreaId = sourceAreas.some((area) => area.id === sourceAreaId)
+    ? sourceAreaId
+    : (sourceAreas[0]?.id ?? "");
   const sourceBins = useMemo(
-    () => bins.filter((bin) => bin.storageAreaId === sourceAreaId),
-    [bins, sourceAreaId],
+    () => bins.filter((bin) => bin.storageAreaId === effectiveSourceAreaId),
+    [bins, effectiveSourceAreaId],
   );
   const destAreas = useMemo(
     () => areas.filter((area) => area.locationId === destLocationId),
     [areas, destLocationId],
   );
+  const effectiveDestAreaId = destAreas.some((area) => area.id === destAreaId)
+    ? destAreaId
+    : (destAreas[0]?.id ?? "");
   const destBins = useMemo(
-    () => bins.filter((bin) => bin.storageAreaId === destAreaId),
-    [bins, destAreaId],
+    () => bins.filter((bin) => bin.storageAreaId === effectiveDestAreaId),
+    [bins, effectiveDestAreaId],
   );
-
-  useEffect(() => {
-    if (!sourceAreaId && sourceAreas[0]) setSourceAreaId(sourceAreas[0].id);
-  }, [sourceAreas, sourceAreaId]);
-
-  useEffect(() => {
-    if (!destAreaId && destAreas[0]) setDestAreaId(destAreas[0].id);
-  }, [destAreas, destAreaId]);
+  const effectiveSourceBinId = sourceBins.some((bin) => bin.id === sourceBinId)
+    ? sourceBinId
+    : "";
+  const effectiveDestBinId = destBins.some((bin) => bin.id === destBinId) ? destBinId : "";
 
   function refresh() {
     startTransition(() => router.refresh());
@@ -231,6 +254,31 @@ export function TransactionWorkspace({
         <p className="text-sm capitalize text-muted">
           {TYPE_LABELS[type]} · {transaction.status}
         </p>
+        {isReversed ? (
+          <p className="text-sm text-accent">This transaction has been reversed.</p>
+        ) : null}
+        {transaction.reversedByTransactionId && linkedReversalNumber ? (
+          <p className="text-sm">
+            Reversed by{" "}
+            <Link
+              href={`/inventory/transactions/${transaction.reversedByTransactionId}`}
+              className="underline underline-offset-2"
+            >
+              {linkedReversalNumber}
+            </Link>
+          </p>
+        ) : null}
+        {transaction.reversesTransactionId && linkedOriginalNumber ? (
+          <p className="text-sm">
+            Reverses{" "}
+            <Link
+              href={`/inventory/transactions/${transaction.reversesTransactionId}`}
+              className="underline underline-offset-2"
+            >
+              {linkedOriginalNumber}
+            </Link>
+          </p>
+        ) : null}
         {transaction.referenceText ? (
           <p className="text-sm">Reference: {transaction.referenceText}</p>
         ) : null}
@@ -331,11 +379,11 @@ export function TransactionWorkspace({
                   enteredQuantity: Number(enteredQuantity),
                   enteredUnitId,
                   sourceLocationId: showSource ? sourceLocationId : null,
-                  sourceStorageAreaId: showSource ? sourceAreaId : null,
-                  sourceBinId: showSource && sourceBinId ? sourceBinId : null,
+                  sourceStorageAreaId: showSource ? effectiveSourceAreaId : null,
+                  sourceBinId: showSource && effectiveSourceBinId ? effectiveSourceBinId : null,
                   destinationLocationId: showDest ? destLocationId : null,
-                  destinationStorageAreaId: showDest ? destAreaId : null,
-                  destinationBinId: showDest && destBinId ? destBinId : null,
+                  destinationStorageAreaId: showDest ? effectiveDestAreaId : null,
+                  destinationBinId: showDest && effectiveDestBinId ? effectiveDestBinId : null,
                   unitCost: unitCost ? Number(unitCost) : null,
                   notes: lineNotes.trim() ? lineNotes : null,
                 });
@@ -440,14 +488,14 @@ export function TransactionWorkspace({
                   <span className="text-muted">From area</span>
                   <select
                     required
-                    value={sourceAreaId}
+                    value={effectiveSourceAreaId}
                     onChange={(e) => {
                       setSourceAreaId(e.target.value);
                       setSourceBinId("");
                     }}
                     className="w-full rounded-md border border-border bg-background px-3 py-2"
                   >
-                    <option value="">Select area</option>
+                    {sourceAreas.length === 0 ? <option value="">Select area</option> : null}
                     {sourceAreas.map((area) => (
                       <option key={area.id} value={area.id}>
                         {area.name}
@@ -458,7 +506,7 @@ export function TransactionWorkspace({
                 <label className="space-y-1 text-sm">
                   <span className="text-muted">From bin</span>
                   <select
-                    value={sourceBinId}
+                    value={effectiveSourceBinId}
                     onChange={(e) => setSourceBinId(e.target.value)}
                     className="w-full rounded-md border border-border bg-background px-3 py-2"
                   >
@@ -498,14 +546,14 @@ export function TransactionWorkspace({
                   <span className="text-muted">To area</span>
                   <select
                     required
-                    value={destAreaId}
+                    value={effectiveDestAreaId}
                     onChange={(e) => {
                       setDestAreaId(e.target.value);
                       setDestBinId("");
                     }}
                     className="w-full rounded-md border border-border bg-background px-3 py-2"
                   >
-                    <option value="">Select area</option>
+                    {destAreas.length === 0 ? <option value="">Select area</option> : null}
                     {destAreas.map((area) => (
                       <option key={area.id} value={area.id}>
                         {area.name}
@@ -516,7 +564,7 @@ export function TransactionWorkspace({
                 <label className="space-y-1 text-sm">
                   <span className="text-muted">To bin</span>
                   <select
-                    value={destBinId}
+                    value={effectiveDestBinId}
                     onChange={(e) => setDestBinId(e.target.value)}
                     className="w-full rounded-md border border-border bg-background px-3 py-2"
                   >
@@ -557,8 +605,8 @@ export function TransactionWorkspace({
               type="submit"
               disabled={
                 pending ||
-                (showSource && !sourceAreaId) ||
-                (showDest && !destAreaId)
+                (showSource && !effectiveSourceAreaId) ||
+                (showDest && !effectiveDestAreaId)
               }
             >
               Add line
@@ -607,6 +655,50 @@ export function TransactionWorkspace({
             </Button>
           </div>
         </>
+      ) : null}
+
+      {canReverse ? (
+        <form
+          className="grid max-w-xl gap-3 border border-border bg-surface p-4"
+          onSubmit={(event) => {
+            event.preventDefault();
+            if (pending || submitting) return;
+            setMessage(null);
+            setSubmitting(true);
+            startTransition(async () => {
+              const result = await reverseInventoryTransactionAction(transaction.id, {
+                reason: reversalReason,
+              });
+              if (!result.ok) {
+                setMessage(result.error);
+                setSubmitting(false);
+                return;
+              }
+              router.push(`/inventory/transactions/${result.data.id}`);
+              router.refresh();
+            });
+          }}
+        >
+          <div className="space-y-1">
+            <h2 className="text-lg font-semibold">Reverse transaction</h2>
+            <p className="text-sm text-muted">
+              Creates a completed reversal that posts exact inverse ledger entries.
+            </p>
+          </div>
+          <label className="space-y-1 text-sm">
+            <span className="text-muted">Reversal reason (required)</span>
+            <textarea
+              required
+              value={reversalReason}
+              onChange={(e) => setReversalReason(e.target.value)}
+              rows={3}
+              className="w-full rounded-md border border-border bg-background px-3 py-2"
+            />
+          </label>
+          <Button type="submit" disabled={pending || submitting || !reversalReason.trim()}>
+            {submitting ? "Reversing…" : "Reverse"}
+          </Button>
+        </form>
       ) : null}
     </div>
   );

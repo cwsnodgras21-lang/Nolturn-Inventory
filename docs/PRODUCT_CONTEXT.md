@@ -1,13 +1,13 @@
 # Product context
 
 **Last reviewed:** 2026-08-02  
-**Phase:** 2.4 — Inventory ledger foundation
+**Phase:** 3.2 — Purchasing foundation
 
 This document describes functionality that **exists today**. Planned work lives in [ROADMAP.md](./ROADMAP.md).
 
 ## Product purpose
 
-Nolt Inventory is a multi-tenant inventory operations platform. Phase 2.4 establishes the immutable inventory ledger with opening balances and positive adjustments on top of catalog and storage.
+Nolt Inventory is a multi-tenant inventory operations platform. Phase 3.2 adds suppliers and purchase orders with ledger-backed receiving on top of Phase 3.1 counts and Phase 2 movements.
 
 ## Tech stack
 
@@ -27,21 +27,35 @@ Units, categories, items, variants, conversions, identifiers.
 
 Location-scoped storage areas and optional bins.
 
-### Inventory ledger (Phase 2.4)
+### Inventory ledger, movements, and reversals (Phases 2.4–2.6)
 
-- Transaction headers/lines for `opening_balance` and `positive_adjustment`
+- Transaction headers/lines for movements + `reversal`
 - Immutable ledger entries + rebuildable balances
-- Permissions `inventory.read` / `inventory.adjust`
-- UI: current stock, transaction history, create/complete draft adjustments
+- Negative-stock enforcement, draft location hardening, reverse RPC
 - See [INVENTORY_LEDGER.md](./INVENTORY_LEDGER.md)
+
+### Inventory counts (Phase 3.1)
+
+- Count sessions, blind mode, frozen expected quantities, review, ledger reconciliation
+- UI: `/inventory/counts`
+
+### Purchasing foundation (Phase 3.2)
+
+- Tenant-owned suppliers + contacts (soft `active`/`inactive`)
+- Purchase orders and lines with frozen purchase-unit → base conversion
+- Statuses: draft → submitted → partially_received → received (or cancelled)
+- Receiving posts normal `receipt` transactions via `complete_inventory_transaction`
+- Partial receipts, remaining quantity tracking, over-receipt rejection
+- Permissions `purchasing.read` / `purchasing.manage` / `purchasing.receive`
+- UI: `/purchasing`, `/purchasing/suppliers`, `/purchasing/orders`
 
 ## Not implemented
 
-Receipts, consumption, negative adjustments, transfers, reversals, lots, expiration, counts, procurement, modules, Stripe, PandaDoc, Nolt.
+Lots, expiration, serials, cycle-count scheduling, purchase requests/approvals, AP/payments, automated reordering, modules, Stripe, PandaDoc, Nolt.
 
 ## Navigation
 
-Inventory is available with `inventory.read`. Administration still hosts catalog and storage. Purchasing / Nolt remain planned placeholders.
+Inventory is available with `inventory.read`. Purchasing is available with `purchasing.read`. Counts, movements, and reverse controls remain permission-gated. Nolt remains a planned placeholder.
 
 ## Local setup
 
@@ -49,14 +63,13 @@ Inventory is available with `inventory.read`. Administration still hosts catalog
 cp .env.example .env.local
 npm install
 npm run supabase:start
+# copy keys from `npx supabase status -o env` into .env.local
 npm run db:reset
 npm run db:bootstrap
 npm run dev
 ```
 
 Demo password: `password123`
-
-Bootstrap seeds catalog, storage, and a completed opening balance (IPA + Medium gloves) per primary location.
 
 ## Verification
 
@@ -68,6 +81,7 @@ npm run test:e2e
 
 ## Code map
 
-- `src/modules/inventory/` — ledger domain + UI
-- `src/modules/catalog/`, `src/modules/storage/`
-- `docs/INVENTORY_LEDGER.md`, `docs/PHASE2_4_INSPECTION.md`
+- `src/modules/suppliers/` — suppliers + contacts
+- `src/modules/procurement/` — purchase orders + receiving
+- `src/modules/counts/` — count sessions, lines, review, reconciliation UI
+- `src/modules/inventory/` — ledger domain + movement UI

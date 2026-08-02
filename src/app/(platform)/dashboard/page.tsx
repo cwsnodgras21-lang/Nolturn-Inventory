@@ -57,7 +57,7 @@ export default async function DashboardPage() {
           <li>Tenant context: resolved</li>
           <li>Permissions: {tenant.permissionKeys.length} granted</li>
           <li>Accessible locations: {locations.length}</li>
-          <li>Inventory / purchasing / Nolt: not implemented</li>
+          <li>Nolt intelligence: not implemented</li>
         </ul>
       </div>
     </section>

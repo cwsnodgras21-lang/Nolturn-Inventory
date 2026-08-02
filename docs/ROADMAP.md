@@ -60,29 +60,57 @@ Unimplemented work only. Implemented behavior belongs in PRODUCT_CONTEXT.md.
 - [x] `inventory.read` / `inventory.adjust` + location-scoped RLS
 - [x] Minimal stock/transaction UI + ledger tests/docs
 
-## Phase 2 (remaining) — Inventory operations
+## Phase 2.5 — Core inventory movements
 
-- Receiving / receipts
-- Consumption
-- Negative adjustments
-- Transfers
-- Reversals
-- Inventory history polish
+- [x] Receipt / consumption / negative adjustment / transfer types
+- [x] Source + destination line dimensions; transfer dual ledger posting
+- [x] Negative-stock enforcement at exact balance dimensions
+- [x] `inventory.receive` / `inventory.consume` / `inventory.transfer` + role mappings
+- [x] Movement UI workspaces + stock/history filters
+- [x] Extended RLS/ledger tests + docs
 
-## Phase 3 — Counts, lots, and expiration
+## Phase 2.6 — Reversals and ledger hardening
+
+- [x] Transaction reversal RPC with exact inverse ledger posts
+- [x] Bidirectional original/reversal linking + duplicate reverse protection
+- [x] `inventory.reverse` + role mappings; location access on all affected locations
+- [x] Draft location authorization hardening (RLS + commands)
+- [x] Immutability for completed/reversed/ledger/balances/links
+- [x] Reconciliation check + adjust-gated rebuild recovery
+- [x] Reverse UI on transaction detail + Phase 2 RLS/E2E coverage + docs
+
+## Phase 2 — Inventory operations (complete)
+
+Phase 2.1–2.6 delivered catalog, storage, ledger, movements, and reversals.
+
+## Phase 3.1 — Inventory counts
+
+- [x] Count sessions + assigned locations + count lines
+- [x] Blind count mode + frozen expected quantities
+- [x] Review workflow (accept / reject / return)
+- [x] Ledger reconciliation via ± adjustments (`complete_inventory_transaction`)
+- [x] `inventory.count.read` / `perform` / `review` + location-scoped RLS
+- [x] Tablet-friendly count UI + RLS tests + docs
+
+## Phase 3.2 — Purchasing foundation
+
+- [x] Suppliers + contacts (soft status)
+- [x] Purchase orders + lines with frozen conversion
+- [x] Submit / cancel / partial+full receive against PO
+- [x] Receiving via existing `receipt` + `complete_inventory_transaction`
+- [x] `purchasing.read` / `manage` / `receive` + location-scoped RLS
+- [x] Purchasing UI + RLS tests + docs
+
+## Phase 3 (remaining) — Lots and expiration
 
 - Lots, expiration, serial tracking contract
-- Count sessions, assignments, reconciliation
-- Variance approval
+- Cycle count scheduling
 - Expiration alerts
-- Mobile-friendly count UX
 
-## Phase 4 — Procurement
+## Phase 4 — Procurement (advanced)
 
-- Suppliers
-- Purchase requests and orders
+- Purchase requests
 - Approval workflow
-- Receiving against POs (partial/full)
 - Cost history
 - Accounting integration boundary only (no full AP)
 
