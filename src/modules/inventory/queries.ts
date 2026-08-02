@@ -72,7 +72,7 @@ export async function listTransactions(options?: {
   let query = supabase
     .from("inventory_transactions")
     .select(
-      "id, organization_id, transaction_number, transaction_type, status, notes, reference_text, created_by, completed_by, completed_at, created_at, updated_at",
+      "id, organization_id, transaction_number, transaction_type, status, notes, reference_text, created_by, completed_by, completed_at, reverses_transaction_id, reversed_by_transaction_id, created_at, updated_at",
     )
     .eq("organization_id", context.organizationId)
     .order("created_at", { ascending: false });
@@ -98,7 +98,7 @@ export async function getTransaction(transactionId: string): Promise<InventoryTr
   const { data, error } = await supabase
     .from("inventory_transactions")
     .select(
-      "id, organization_id, transaction_number, transaction_type, status, notes, reference_text, created_by, completed_by, completed_at, created_at, updated_at",
+      "id, organization_id, transaction_number, transaction_type, status, notes, reference_text, created_by, completed_by, completed_at, reverses_transaction_id, reversed_by_transaction_id, created_at, updated_at",
     )
     .eq("organization_id", context.organizationId)
     .eq("id", transactionId)
@@ -112,6 +112,21 @@ export async function getTransaction(transactionId: string): Promise<InventoryTr
   }
 
   return mapTransaction(data);
+}
+
+export async function getLinkedTransactionNumber(
+  transactionId: string | null | undefined,
+): Promise<string | null> {
+  if (!transactionId) return null;
+  const context = await requirePermission("inventory.read");
+  const supabase = await createServerSupabaseClient();
+  const { data } = await supabase
+    .from("inventory_transactions")
+    .select("transaction_number")
+    .eq("organization_id", context.organizationId)
+    .eq("id", transactionId)
+    .maybeSingle();
+  return data?.transaction_number ?? null;
 }
 
 export async function listTransactionLines(

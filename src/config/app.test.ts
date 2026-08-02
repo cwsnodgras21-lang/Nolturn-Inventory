@@ -55,9 +55,9 @@ describe("audit metadata sanitization", () => {
   });
 });
 
-describe("appConfig phase 2.5", () => {
-  it("reports phase 2.5 and enables inventory nav", () => {
-    expect(appConfig.phase).toBe(2.5);
+describe("appConfig phase 2.6", () => {
+  it("reports phase 2.6 and enables inventory nav", () => {
+    expect(appConfig.phase).toBe(2.6);
     const inventory = platformNav.find((item) => item.href === "/inventory");
     expect(inventory?.status).toBe("available");
     const storage = administrationNav.find((item) => item.href === "/administration/storage");

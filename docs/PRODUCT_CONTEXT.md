@@ -1,13 +1,13 @@
 # Product context
 
 **Last reviewed:** 2026-08-02  
-**Phase:** 2.5 — Core inventory movements
+**Phase:** 2.6 — Reversals and ledger hardening
 
 This document describes functionality that **exists today**. Planned work lives in [ROADMAP.md](./ROADMAP.md).
 
 ## Product purpose
 
-Nolt Inventory is a multi-tenant inventory operations platform. Phase 2.5 adds receipts, consumption, negative adjustments, and transfers on top of the immutable ledger foundation.
+Nolt Inventory is a multi-tenant inventory operations platform. Phase 2.6 completes Phase 2 inventory operations with transaction reversals, draft location hardening, and ledger reconciliation on top of the immutable ledger and core movements.
 
 ## Tech stack
 
@@ -27,22 +27,25 @@ Units, categories, items, variants, conversions, identifiers.
 
 Location-scoped storage areas and optional bins.
 
-### Inventory ledger & movements (Phases 2.4–2.5)
+### Inventory ledger, movements, and reversals (Phases 2.4–2.6)
 
-- Transaction headers/lines for `opening_balance`, `positive_adjustment`, `negative_adjustment`, `receipt`, `consumption`, `transfer`
+- Transaction headers/lines for `opening_balance`, `positive_adjustment`, `negative_adjustment`, `receipt`, `consumption`, `transfer`, `reversal`
 - Immutable ledger entries (`effect_role` for transfer source/destination) + rebuildable balances
-- Negative-stock enforcement at exact storage dimensions
-- Permissions `inventory.read` / `inventory.adjust` / `inventory.receive` / `inventory.consume` / `inventory.transfer`
-- UI: current stock, transaction history/filters, receive / consume / transfer / adjust workspaces
+- Negative-stock enforcement at exact storage dimensions (including reverse inverse debits)
+- Bidirectional original/reversal links; one reversal per completed original
+- Draft creation/update rejects inaccessible source/destination locations
+- Reconciliation RPC compares balances to ledger sums; rebuild remains an adjust-gated recovery tool
+- Permissions `inventory.read` / `inventory.adjust` / `inventory.receive` / `inventory.consume` / `inventory.transfer` / `inventory.reverse`
+- UI: stock, history/filters, movement workspaces, reverse action with reason and linked status
 - See [INVENTORY_LEDGER.md](./INVENTORY_LEDGER.md)
 
 ## Not implemented
 
-Reversals, lots, expiration, counts, procurement, modules, Stripe, PandaDoc, Nolt.
+Lots, expiration, counts, procurement, modules, Stripe, PandaDoc, Nolt.
 
 ## Navigation
 
-Inventory is available with `inventory.read`. Movement routes require their type-specific permissions. Administration still hosts catalog and storage. Purchasing / Nolt remain planned placeholders.
+Inventory is available with `inventory.read`. Movement routes require their type-specific permissions. Reverse controls require `inventory.reverse` and appear on eligible completed transaction detail pages. Administration still hosts catalog and storage. Purchasing / Nolt remain planned placeholders.
 
 ## Local setup
 
@@ -70,6 +73,6 @@ npm run test:e2e
 
 ## Code map
 
-- `src/modules/inventory/` — ledger domain + movement UI
+- `src/modules/inventory/` — ledger domain + movement/reversal UI
 - `src/modules/catalog/`, `src/modules/storage/`
-- `docs/INVENTORY_LEDGER.md`, `docs/PHASE2_5_INSPECTION.md`
+- `docs/INVENTORY_LEDGER.md`, `docs/PHASE2_6_INSPECTION.md`

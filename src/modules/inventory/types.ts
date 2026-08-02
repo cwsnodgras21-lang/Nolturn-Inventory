@@ -5,10 +5,28 @@ export const INVENTORY_TRANSACTION_TYPES = [
   "receipt",
   "consumption",
   "transfer",
+  "reversal",
 ] as const;
 export type InventoryTransactionType = (typeof INVENTORY_TRANSACTION_TYPES)[number];
 
-export const INVENTORY_TRANSACTION_STATUSES = ["draft", "completed", "cancelled"] as const;
+/** Types that users may create as drafts (reversals are RPC-only). */
+export const CREATABLE_INVENTORY_TRANSACTION_TYPES = [
+  "opening_balance",
+  "positive_adjustment",
+  "negative_adjustment",
+  "receipt",
+  "consumption",
+  "transfer",
+] as const;
+export type CreatableInventoryTransactionType =
+  (typeof CREATABLE_INVENTORY_TRANSACTION_TYPES)[number];
+
+export const INVENTORY_TRANSACTION_STATUSES = [
+  "draft",
+  "completed",
+  "cancelled",
+  "reversed",
+] as const;
 export type InventoryTransactionStatus = (typeof INVENTORY_TRANSACTION_STATUSES)[number];
 
 export const INBOUND_TRANSACTION_TYPES = [
@@ -30,6 +48,8 @@ export type InventoryTransaction = {
   createdBy: string | null;
   completedBy: string | null;
   completedAt: string | null;
+  reversesTransactionId: string | null;
+  reversedByTransactionId: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -104,7 +124,12 @@ export type InventoryLedgerEntry = {
 
 export function permissionForTransactionType(
   type: InventoryTransactionType,
-): "inventory.adjust" | "inventory.receive" | "inventory.consume" | "inventory.transfer" {
+):
+  | "inventory.adjust"
+  | "inventory.receive"
+  | "inventory.consume"
+  | "inventory.transfer"
+  | "inventory.reverse" {
   switch (type) {
     case "receipt":
       return "inventory.receive";
@@ -112,7 +137,17 @@ export function permissionForTransactionType(
       return "inventory.consume";
     case "transfer":
       return "inventory.transfer";
+    case "reversal":
+      return "inventory.reverse";
     default:
       return "inventory.adjust";
   }
+}
+
+export function isReversibleTransaction(transaction: InventoryTransaction): boolean {
+  return (
+    transaction.status === "completed" &&
+    transaction.transactionType !== "reversal" &&
+    !transaction.reversedByTransactionId
+  );
 }

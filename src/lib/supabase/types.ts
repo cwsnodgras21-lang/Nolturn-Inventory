@@ -649,6 +649,8 @@ export type Database = {
           created_by: string | null;
           completed_by: string | null;
           completed_at: string | null;
+          reverses_transaction_id: string | null;
+          reversed_by_transaction_id: string | null;
         } & Timestamps;
         Insert: {
           id?: string;
@@ -661,6 +663,8 @@ export type Database = {
           created_by?: string | null;
           completed_by?: string | null;
           completed_at?: string | null;
+          reverses_transaction_id?: string | null;
+          reversed_by_transaction_id?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -675,6 +679,8 @@ export type Database = {
           created_by?: string | null;
           completed_by?: string | null;
           completed_at?: string | null;
+          reverses_transaction_id?: string | null;
+          reversed_by_transaction_id?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -1065,6 +1071,37 @@ export type Database = {
           created_at: string;
           updated_at: string;
         };
+      };
+      reverse_inventory_transaction: {
+        Args: { p_transaction_id: string; p_reason: string };
+        Returns: {
+          id: string;
+          organization_id: string;
+          transaction_number: string;
+          transaction_type: string;
+          status: string;
+          notes: string | null;
+          created_by: string | null;
+          completed_by: string | null;
+          completed_at: string | null;
+          reverses_transaction_id: string | null;
+          reversed_by_transaction_id: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+      };
+      reconcile_inventory_balances: {
+        Args: { p_organization_id: string };
+        Returns: {
+          item_id: string;
+          variant_id: string | null;
+          location_id: string;
+          storage_area_id: string;
+          bin_id: string | null;
+          balance_quantity: number;
+          ledger_quantity: number;
+          difference: number;
+        }[];
       };
       rebuild_inventory_balances: {
         Args: { p_organization_id: string };

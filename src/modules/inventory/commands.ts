@@ -9,6 +9,7 @@ import { AUDIT_ACTIONS, writeAuditEvent } from "@/modules/audit";
 import { mapInventoryDbError } from "@/modules/inventory/mappers";
 import {
   createInventoryTransactionSchema,
+  reverseInventoryTransactionSchema,
   updateInventoryTransactionSchema,
   upsertInventoryLineSchema,
 } from "@/modules/inventory/schemas";
@@ -519,4 +520,93 @@ export async function completeAdjustmentAction(
   transactionId: string,
 ): Promise<InventoryActionResult> {
   return completeInventoryTransactionAction(transactionId);
+}
+
+export async function reverseInventoryTransactionAction(
+  transactionId: string,
+  raw: unknown,
+): Promise<InventoryActionResult<{ id: string }>> {
+  try {
+    const input = reverseInventoryTransactionSchema.parse(raw);
+    const context = await requirePermission("inventory.reverse");
+    const supabase = await createServerSupabaseClient();
+
+    const { data: existing } = await supabase
+      .from("inventory_transactions")
+      .select(
+        "id, transaction_type, status, reversed_by_transaction_id, transaction_number",
+      )
+      .eq("id", transactionId)
+      .eq("organization_id", context.organizationId)
+      .maybeSingle();
+
+    if (!existing) {
+      throw new AppError("NOT_FOUND", "Transaction not found.", 404);
+    }
+
+    if (existing.transaction_type === "reversal") {
+      throw new AppError("VALIDATION", "Reversal transactions cannot be reversed.", 400);
+    }
+
+    if (existing.status !== "completed" || existing.reversed_by_transaction_id) {
+      throw new AppError(
+        "VALIDATION",
+        existing.reversed_by_transaction_id
+          ? "This transaction has already been reversed."
+          : "Only completed transactions can be reversed.",
+        400,
+      );
+    }
+
+    const { data: ledgerLocations } = await supabase
+      .from("inventory_ledger_entries")
+      .select("location_id")
+      .eq("transaction_id", transactionId)
+      .eq("organization_id", context.organizationId);
+
+    const uniqueLocations = [
+      ...new Set((ledgerLocations ?? []).map((row) => row.location_id).filter(Boolean)),
+    ];
+    for (const locationId of uniqueLocations) {
+      await requireLocationAccess(locationId);
+    }
+
+    const { data, error } = await supabase.rpc("reverse_inventory_transaction", {
+      p_transaction_id: transactionId,
+      p_reason: input.reason,
+    });
+
+    if (error) {
+      throw new AppError("VALIDATION", mapInventoryDbError(error.message), 400);
+    }
+
+    const reversalId =
+      data && typeof data === "object" && "id" in data
+        ? String((data as { id: string }).id)
+        : "";
+
+    if (!reversalId) {
+      throw new AppError("INTERNAL", "Reversal did not return a transaction id.", 500);
+    }
+
+    await writeAuditEvent({
+      organizationId: context.organizationId,
+      actorUserId: context.userId,
+      action: AUDIT_ACTIONS.INVENTORY_TRANSACTION_REVERSED,
+      entityType: "inventory_transaction",
+      entityId: transactionId,
+      summary: `Inventory transaction reversed: ${existing.transaction_number}`,
+      metadata: {
+        originalTransactionId: transactionId,
+        reversalTransactionId: reversalId,
+        reason: input.reason,
+      },
+    });
+
+    revalidateInventory(transactionId);
+    revalidateInventory(reversalId);
+    return { ok: true, data: { id: reversalId } };
+  } catch (error) {
+    return fail(error);
+  }
 }

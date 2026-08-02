@@ -69,10 +69,19 @@ Unimplemented work only. Implemented behavior belongs in PRODUCT_CONTEXT.md.
 - [x] Movement UI workspaces + stock/history filters
 - [x] Extended RLS/ledger tests + docs
 
-## Phase 2 (remaining) — Inventory operations
+## Phase 2.6 — Reversals and ledger hardening
 
-- Reversals
-- Inventory history polish
+- [x] Transaction reversal RPC with exact inverse ledger posts
+- [x] Bidirectional original/reversal linking + duplicate reverse protection
+- [x] `inventory.reverse` + role mappings; location access on all affected locations
+- [x] Draft location authorization hardening (RLS + commands)
+- [x] Immutability for completed/reversed/ledger/balances/links
+- [x] Reconciliation check + adjust-gated rebuild recovery
+- [x] Reverse UI on transaction detail + Phase 2 RLS/E2E coverage + docs
+
+## Phase 2 — Inventory operations (complete)
+
+Phase 2.1–2.6 delivered catalog, storage, ledger, movements, and reversals.
 
 ## Phase 3 — Counts, lots, and expiration
 

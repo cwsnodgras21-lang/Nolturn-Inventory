@@ -22,6 +22,8 @@ export function mapTransaction(row: {
   created_by: string | null;
   completed_by: string | null;
   completed_at: string | null;
+  reverses_transaction_id?: string | null;
+  reversed_by_transaction_id?: string | null;
   created_at: string;
   updated_at: string;
 }): InventoryTransaction {
@@ -36,6 +38,8 @@ export function mapTransaction(row: {
     createdBy: row.created_by,
     completedBy: row.completed_by,
     completedAt: row.completed_at,
+    reversesTransactionId: row.reverses_transaction_id ?? null,
+    reversedByTransactionId: row.reversed_by_transaction_id ?? null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -162,6 +166,18 @@ export function mapInventoryDbError(message: string | undefined): string {
   if (text.includes("already completed")) {
     return "This transaction was already completed.";
   }
+  if (text.includes("already reversed")) {
+    return "This transaction has already been reversed.";
+  }
+  if (text.includes("reversal requires a reason")) {
+    return "A reversal reason is required.";
+  }
+  if (text.includes("only completed inventory transactions can be reversed")) {
+    return "Only completed transactions can be reversed.";
+  }
+  if (text.includes("reversal transactions cannot be reversed")) {
+    return "Reversal transactions cannot be reversed.";
+  }
   if (text.includes("requires a variant")) {
     return "This item requires a variant.";
   }
@@ -177,7 +193,10 @@ export function mapInventoryDbError(message: string | undefined): string {
   if (text.includes("source and destination must differ")) {
     return "Transfer source and destination must differ.";
   }
-  if (text.includes("not accessible")) {
+  if (text.includes("not accessible") || text.includes("location is not accessible")) {
+    return "A required location is not accessible.";
+  }
+  if (text.includes("row-level security")) {
     return "A required location is not accessible.";
   }
   if (text.includes("cannot be edited") || text.includes("cannot be deleted") || text.includes("immutable")) {

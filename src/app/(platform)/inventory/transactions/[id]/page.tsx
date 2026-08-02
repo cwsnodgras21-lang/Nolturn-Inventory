@@ -10,8 +10,15 @@ import { listAllVariants, listItems } from "@/modules/catalog/item-queries";
 import { listUnits } from "@/modules/catalog/queries";
 import { TransactionWorkspace } from "@/modules/inventory/components/movement-workspace";
 import { loadAccessibleStorageContext } from "@/modules/inventory/load-context";
-import { getTransaction, listTransactionLines } from "@/modules/inventory/queries";
-import { permissionForTransactionType } from "@/modules/inventory/types";
+import {
+  getLinkedTransactionNumber,
+  getTransaction,
+  listTransactionLines,
+} from "@/modules/inventory/queries";
+import {
+  isReversibleTransaction,
+  permissionForTransactionType,
+} from "@/modules/inventory/types";
 
 export const metadata: Metadata = {
   title: "Transaction detail",
@@ -44,15 +51,22 @@ export default async function TransactionDetailPage({
     throw error;
   }
 
-  const [{ locations, areas, bins }, lines, items, variants, units] = await Promise.all([
-    loadAccessibleStorageContext(tenant),
-    listTransactionLines(id),
-    listItems({ status: "active" }),
-    listAllVariants(),
-    listUnits({ status: "active" }),
-  ]);
+  const [{ locations, areas, bins }, lines, items, variants, units, linkedOriginalNumber, linkedReversalNumber] =
+    await Promise.all([
+      loadAccessibleStorageContext(tenant),
+      listTransactionLines(id),
+      listItems({ status: "active" }),
+      listAllVariants(),
+      listUnits({ status: "active" }),
+      getLinkedTransactionNumber(transaction.reversesTransactionId),
+      getLinkedTransactionNumber(transaction.reversedByTransactionId),
+    ]);
 
   const managePermission = permissionForTransactionType(transaction.transactionType);
+  const canManage =
+    transaction.transactionType === "reversal"
+      ? false
+      : can(tenant, managePermission);
 
   return (
     <section className="mx-auto flex w-full max-w-5xl flex-col gap-8">
@@ -74,7 +88,10 @@ export default async function TransactionDetailPage({
         locations={locations}
         areas={areas}
         bins={bins}
-        canManage={can(tenant, managePermission)}
+        canManage={canManage}
+        canReverse={can(tenant, "inventory.reverse") && isReversibleTransaction(transaction)}
+        linkedOriginalNumber={linkedOriginalNumber}
+        linkedReversalNumber={linkedReversalNumber}
       />
     </section>
   );

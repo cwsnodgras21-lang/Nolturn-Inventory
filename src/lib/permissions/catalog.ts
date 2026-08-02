@@ -23,6 +23,7 @@ export const PERMISSION_KEYS = [
   "inventory.receive",
   "inventory.consume",
   "inventory.transfer",
+  "inventory.reverse",
 ] as const;
 
 export type PermissionKey = (typeof PERMISSION_KEYS)[number];

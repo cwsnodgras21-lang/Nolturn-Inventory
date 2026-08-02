@@ -1,7 +1,7 @@
 # Tenancy model
 
 **Last reviewed:** 2026-08-02  
-**Status:** Phase 2.3 (location-scoped storage)
+**Status:** Phase 2.6 (location-scoped storage and inventory)
 
 ## Model
 
@@ -23,7 +23,7 @@ Explicit mode on membership:
 - `all` — organization-wide location access
 - `restricted` — only rows in `membership_location_scopes`
 
-Location-scoped product data (storage areas/bins today; inventory later) must honor this mode in both server helpers and RLS.
+Location-scoped product data (storage areas/bins, inventory drafts, completion, and reversals) must honor this mode in both server helpers and RLS. Unauthorized location IDs must not be persisted on draft lines.
 
 ## Active organization
 

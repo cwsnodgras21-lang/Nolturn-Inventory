@@ -37,6 +37,7 @@ export const AUDIT_ACTIONS = {
   INVENTORY_TRANSACTION_UPDATED: "inventory.transaction.updated",
   INVENTORY_TRANSACTION_CANCELLED: "inventory.transaction.cancelled",
   INVENTORY_TRANSACTION_COMPLETED: "inventory.transaction.completed",
+  INVENTORY_TRANSACTION_REVERSED: "inventory.transaction.reversed",
   INVENTORY_TRANSACTION_LINE_ADDED: "inventory.transaction_line.added",
   INVENTORY_TRANSACTION_LINE_UPDATED: "inventory.transaction_line.updated",
   INVENTORY_TRANSACTION_LINE_REMOVED: "inventory.transaction_line.removed",

@@ -81,6 +81,7 @@ export function TransactionsFilterTable({
           <option value="all">All statuses</option>
           <option value="draft">Draft</option>
           <option value="completed">Completed</option>
+          <option value="reversed">Reversed</option>
           <option value="cancelled">Cancelled</option>
         </select>
       </div>

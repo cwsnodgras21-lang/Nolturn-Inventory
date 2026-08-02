@@ -3,7 +3,7 @@ import { test, expect } from "@playwright/test";
 test("home page renders product brand", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByRole("heading", { name: "Nolt Inventory" })).toBeVisible();
-  await expect(page.getByText("Phase 2.5 — Core inventory movements")).toBeVisible();
+  await expect(page.getByText("Phase 2.6 — Reversals and ledger hardening")).toBeVisible();
 });
 
 test("login page accepts credentials form", async ({ page }) => {

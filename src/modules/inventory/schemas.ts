@@ -1,10 +1,14 @@
 import { z } from "zod";
-import { INVENTORY_TRANSACTION_TYPES } from "@/modules/inventory/types";
+import { CREATABLE_INVENTORY_TRANSACTION_TYPES } from "@/modules/inventory/types";
 
 export const createInventoryTransactionSchema = z.object({
-  transactionType: z.enum(INVENTORY_TRANSACTION_TYPES),
+  transactionType: z.enum(CREATABLE_INVENTORY_TRANSACTION_TYPES),
   notes: z.string().trim().max(2000).optional().nullable(),
   referenceText: z.string().trim().max(200).optional().nullable(),
+});
+
+export const reverseInventoryTransactionSchema = z.object({
+  reason: z.string().trim().min(1).max(2000),
 });
 
 /** @deprecated Prefer createInventoryTransactionSchema */
