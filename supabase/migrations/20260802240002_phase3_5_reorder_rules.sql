@@ -128,7 +128,7 @@ using (
   private.user_has_permission(organization_id, 'inventory.reorder.read')
   and (
     location_id is null
-    or private.user_can_access_location(organization_id, location_id)
+    or private.user_can_access_location(location_id)
   )
 );
 
@@ -137,7 +137,7 @@ with check (
   private.user_has_permission(organization_id, 'inventory.reorder.manage')
   and (
     location_id is null
-    or private.user_can_access_location(organization_id, location_id)
+    or private.user_can_access_location(location_id)
   )
 );
 
@@ -146,14 +146,14 @@ using (
   private.user_has_permission(organization_id, 'inventory.reorder.manage')
   and (
     location_id is null
-    or private.user_can_access_location(organization_id, location_id)
+    or private.user_can_access_location(location_id)
   )
 )
 with check (
   private.user_has_permission(organization_id, 'inventory.reorder.manage')
   and (
     location_id is null
-    or private.user_can_access_location(organization_id, location_id)
+    or private.user_can_access_location(location_id)
   )
 );
 
@@ -162,7 +162,7 @@ using (
   private.user_has_permission(organization_id, 'inventory.reorder.manage')
   and (
     location_id is null
-    or private.user_can_access_location(organization_id, location_id)
+    or private.user_can_access_location(location_id)
   )
 );
 

@@ -29,7 +29,6 @@ describe.skipIf(!enabled)("Phase 3.5 reorder rules and restock planning", () => 
   let fridgeArea: string;
   let fridgeBin: string;
   let warehouseArea: string;
-  let warehouseBin: string;
   let mLUnit: string;
   let qtyItemId: string;
   let lotItemId: string;
@@ -62,12 +61,6 @@ describe.skipIf(!enabled)("Phase 3.5 reorder rules and restock planning", () => 
       .select("id, code")
       .eq("storage_area_id", fridgeArea);
     fridgeBin = fridgeBins?.find((b) => b.code === "MED-FRIDGE-D1")?.id ?? "";
-
-    const { data: whBins } = await admin
-      .from("storage_bins")
-      .select("id, code")
-      .eq("storage_area_id", warehouseArea);
-    warehouseBin = whBins?.[0]?.id ?? "";
 
     const { data: units } = await admin
       .from("units_of_measure")
@@ -136,38 +129,6 @@ describe.skipIf(!enabled)("Phase 3.5 reorder rules and restock planning", () => 
       throw new Error("Bootstrap reorder fixtures missing.");
     }
   });
-
-  async function seedQty(itemId: string, locationId: string, areaId: string, binId: string | null, qty: number) {
-    const { client } = await signIn("owner@nolt.local");
-    const { data: txn } = await client
-      .from("inventory_transactions")
-      .insert({
-        organization_id: orgA,
-        transaction_type: "receipt",
-        status: "draft",
-        transaction_number: "",
-        notes: `reorder seed ${Date.now()}`,
-      })
-      .select("id")
-      .single();
-    await client.from("inventory_transaction_lines").insert({
-      organization_id: orgA,
-      transaction_id: txn!.id,
-      line_number: 1,
-      item_id: itemId,
-      entered_quantity: qty,
-      entered_unit_id: mLUnit,
-      conversion_multiplier: 1,
-      base_quantity: qty,
-      destination_location_id: locationId,
-      destination_storage_area_id: areaId,
-      destination_bin_id: binId,
-    });
-    const completed = await client.rpc("complete_inventory_transaction", {
-      p_transaction_id: txn!.id,
-    });
-    expect(completed.error).toBeNull();
-  }
 
   async function seedLotQty(lotId: string, qty: number, locationId = primaryA, areaId = fridgeArea, binId: string | null = fridgeBin) {
     const { client } = await signIn("owner@nolt.local");

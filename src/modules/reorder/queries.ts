@@ -126,7 +126,7 @@ export async function listRestockSuggestions(options?: {
     locations: { name: string } | { name: string }[] | null;
   };
 
-  const balanceRows = (balances ?? []) as BalanceEmbed[];
+  const balanceRows = (balances ?? []) as unknown as BalanceEmbed[];
 
   const usableBalances: BalanceRowForRestock[] = balanceRows.map((row) => {
     const lot = Array.isArray(row.inventory_lots)
@@ -219,7 +219,11 @@ export async function listRestockSuggestions(options?: {
   const suggestions: RestockSuggestion[] = [];
 
   for (const key of candidateKeys) {
-    const [itemId, variantPart, locationId] = key.split("|");
+    const parts = key.split("|");
+    const itemId = parts[0] ?? "";
+    const variantPart = parts[1] ?? "";
+    const locationId = parts[2] ?? "";
+    if (!itemId || !locationId) continue;
     const variantId = variantPart ? variantPart : null;
     const rule = effectiveReorderRule(ruleScopes, itemId, variantId, locationId);
     if (!rule) continue;
