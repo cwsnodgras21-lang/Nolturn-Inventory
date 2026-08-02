@@ -14,6 +14,8 @@ import {
   listItemVariants,
 } from "@/modules/catalog/item-queries";
 import { listUnits } from "@/modules/catalog/queries";
+import { ItemLotsPanel } from "@/modules/lots/components/lots-panel";
+import { listLots } from "@/modules/lots/queries";
 
 export const metadata: Metadata = {
   title: "Item detail",
@@ -46,11 +48,13 @@ export default async function ItemDetailPage({
     throw error;
   }
 
-  const [variants, conversions, identifiers, units] = await Promise.all([
+  const canReadLots = can(tenant, "inventory.lots.read");
+  const [variants, conversions, identifiers, units, lots] = await Promise.all([
     listItemVariants(id),
     listItemConversions(id),
     listItemIdentifiers(id),
     listUnits({ status: "all" }),
+    canReadLots ? listLots({ itemId: id }) : Promise.resolve([]),
   ]);
 
   return (
@@ -73,6 +77,8 @@ export default async function ItemDetailPage({
             Category: {item.categoryName ?? "None"}
             {item.requiresVariant ? " · Variants required for future stock moves" : null}
             {item.allowNegativeStock ? " · Negative stock allowed (future)" : null}
+            {" · "}
+            Tracking: {item.trackingMode === "lot" ? "lot" : "quantity"}
           </p>
         </div>
         <div className="flex gap-2">
@@ -95,6 +101,16 @@ export default async function ItemDetailPage({
         units={units}
         canManage={can(tenant, "catalog.manage")}
       />
+
+      {canReadLots || can(tenant, "inventory.lots.manage") ? (
+        <ItemLotsPanel
+          itemId={item.id}
+          trackingMode={item.trackingMode}
+          variants={variants.map((variant) => ({ id: variant.id, name: variant.name }))}
+          lots={lots}
+          canManageLots={can(tenant, "inventory.lots.manage")}
+        />
+      ) : null}
     </section>
   );
 }

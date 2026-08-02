@@ -22,6 +22,7 @@ export const recordCountLineSchema = z.object({
 export const addCountLineSchema = z.object({
   itemId: z.string().uuid(),
   variantId: z.string().uuid().nullable().optional(),
+  lotId: z.string().uuid().nullable().optional(),
   locationId: z.string().uuid(),
   storageAreaId: z.string().uuid(),
   binId: z.string().uuid().nullable().optional(),

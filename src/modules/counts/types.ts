@@ -34,6 +34,7 @@ export type CountLine = {
   countSessionId: string;
   itemId: string;
   variantId: string | null;
+  lotId: string | null;
   locationId: string;
   storageAreaId: string;
   binId: string | null;
@@ -52,6 +53,7 @@ export type CountLine = {
   itemName?: string | null;
   itemSku?: string | null;
   variantName?: string | null;
+  lotNumber?: string | null;
   locationName?: string | null;
   storageAreaName?: string | null;
   binName?: string | null;

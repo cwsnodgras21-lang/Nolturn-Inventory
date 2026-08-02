@@ -36,6 +36,7 @@ export const upsertInventoryLineSchema = z.object({
   sourceLocationId: z.string().uuid().nullable().optional(),
   sourceStorageAreaId: z.string().uuid().nullable().optional(),
   sourceBinId: z.string().uuid().nullable().optional(),
+  lotId: z.string().uuid().nullable().optional(),
   unitCost: z.number().nonnegative().nullable().optional(),
   notes: z.string().trim().max(1000).optional().nullable(),
 });

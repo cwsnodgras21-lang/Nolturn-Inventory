@@ -101,11 +101,19 @@ Phase 2.1–2.6 delivered catalog, storage, ledger, movements, and reversals.
 - [x] `purchasing.read` / `manage` / `receive` + location-scoped RLS
 - [x] Purchasing UI + RLS tests + docs
 
-## Phase 3 (remaining) — Lots and expiration
+## Phase 3.3 — Lot and expiration tracking
 
-- Lots, expiration, serial tracking contract
+- [x] Item tracking mode (`quantity` / `lot`) with post-activity guard
+- [x] Inventory lots + statuses; lot uniqueness per item/variant
+- [x] Lot-aware ledger, balances, transfers, reversals, counts, PO receive
+- [x] Expired / expiring-soon views (informational)
+- [x] `inventory.lots.read` / `inventory.lots.manage` + UI + RLS tests
+
+## Phase 3 (remaining)
+
+- Serial tracking contract
 - Cycle count scheduling
-- Expiration alerts
+- Expiration alerts / automated FEFO (future)
 
 ## Phase 4 — Procurement (advanced)
 

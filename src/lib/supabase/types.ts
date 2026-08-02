@@ -284,6 +284,7 @@ export type Database = {
           status: string;
           requires_variant: boolean;
           allow_negative_stock: boolean;
+          tracking_mode: string;
           created_by: string | null;
           sku_normalized: string;
           name_normalized: string;
@@ -300,6 +301,7 @@ export type Database = {
           status?: string;
           requires_variant?: boolean;
           allow_negative_stock?: boolean;
+          tracking_mode?: string;
           created_by?: string | null;
           created_at?: string;
           updated_at?: string;
@@ -316,6 +318,7 @@ export type Database = {
           status?: string;
           requires_variant?: boolean;
           allow_negative_stock?: boolean;
+          tracking_mode?: string;
           created_by?: string | null;
           created_at?: string;
           updated_at?: string;
@@ -697,6 +700,7 @@ export type Database = {
           line_number: number;
           item_id: string;
           variant_id: string | null;
+          lot_id: string | null;
           entered_quantity: number;
           entered_unit_id: string;
           conversion_multiplier: number;
@@ -718,6 +722,7 @@ export type Database = {
           line_number: number;
           item_id: string;
           variant_id?: string | null;
+          lot_id?: string | null;
           entered_quantity: number;
           entered_unit_id: string;
           conversion_multiplier?: number;
@@ -741,6 +746,7 @@ export type Database = {
           line_number?: number;
           item_id?: string;
           variant_id?: string | null;
+          lot_id?: string | null;
           entered_quantity?: number;
           entered_unit_id?: string;
           conversion_multiplier?: number;
@@ -767,6 +773,7 @@ export type Database = {
           transaction_line_id: string;
           item_id: string;
           variant_id: string | null;
+          lot_id: string | null;
           location_id: string;
           storage_area_id: string;
           bin_id: string | null;
@@ -782,6 +789,7 @@ export type Database = {
           transaction_line_id: string;
           item_id: string;
           variant_id?: string | null;
+          lot_id?: string | null;
           location_id: string;
           storage_area_id: string;
           bin_id?: string | null;
@@ -797,6 +805,7 @@ export type Database = {
           transaction_line_id?: string;
           item_id?: string;
           variant_id?: string | null;
+          lot_id?: string | null;
           location_id?: string;
           storage_area_id?: string;
           bin_id?: string | null;
@@ -813,6 +822,7 @@ export type Database = {
           organization_id: string;
           item_id: string;
           variant_id: string | null;
+          lot_id: string | null;
           location_id: string;
           storage_area_id: string;
           bin_id: string | null;
@@ -824,6 +834,7 @@ export type Database = {
           organization_id: string;
           item_id: string;
           variant_id?: string | null;
+          lot_id?: string | null;
           location_id: string;
           storage_area_id: string;
           bin_id?: string | null;
@@ -835,10 +846,51 @@ export type Database = {
           organization_id?: string;
           item_id?: string;
           variant_id?: string | null;
+          lot_id?: string | null;
           location_id?: string;
           storage_area_id?: string;
           bin_id?: string | null;
           quantity_on_hand?: number;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      inventory_lots: {
+        Row: {
+          id: string;
+          organization_id: string;
+          item_id: string;
+          variant_id: string | null;
+          lot_number: string;
+          expiration_date: string | null;
+          status: string;
+          notes: string | null;
+          created_by: string | null;
+        } & Timestamps;
+        Insert: {
+          id?: string;
+          organization_id: string;
+          item_id: string;
+          variant_id?: string | null;
+          lot_number: string;
+          expiration_date?: string | null;
+          status?: string;
+          notes?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          item_id?: string;
+          variant_id?: string | null;
+          lot_number?: string;
+          expiration_date?: string | null;
+          status?: string;
+          notes?: string | null;
+          created_by?: string | null;
+          created_at?: string;
           updated_at?: string;
         };
         Relationships: [];
@@ -920,6 +972,7 @@ export type Database = {
           count_session_id: string;
           item_id: string;
           variant_id: string | null;
+          lot_id: string | null;
           location_id: string;
           storage_area_id: string;
           bin_id: string | null;
@@ -940,6 +993,7 @@ export type Database = {
           count_session_id: string;
           item_id: string;
           variant_id?: string | null;
+          lot_id?: string | null;
           location_id: string;
           storage_area_id: string;
           bin_id?: string | null;
@@ -962,6 +1016,7 @@ export type Database = {
           count_session_id?: string;
           item_id?: string;
           variant_id?: string | null;
+          lot_id?: string | null;
           location_id?: string;
           storage_area_id?: string;
           bin_id?: string | null;

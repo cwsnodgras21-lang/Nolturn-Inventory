@@ -38,6 +38,15 @@ Domains under `src/modules/suppliers/` and `src/modules/procurement/`.
 - `receive_purchase_order` creates a normal inventory `receipt`, calls `complete_inventory_transaction`, then updates PO line quantities and status atomically.
 - No second receiving engine; no direct balance edits.
 
+## Lots and expiration (Phase 3.3)
+
+Domain under `src/modules/lots/`. Lot tracking extends the existing ledger dimensions rather than adding a second inventory engine.
+
+- Items choose `tracking_mode` (`quantity` or `lot`).
+- Optional `lot_id` threads through transaction lines, ledger entries, balances, and count lines.
+- Completion, reverse, count reconcile, and PO receive reuse the same posting helpers with lot dims.
+- Expiration filters are informational; quarantine/non-active status blocks movements.
+
 ## Assumptions
 
 1. Shared schema multi-tenancy with `organization_id` ownership.

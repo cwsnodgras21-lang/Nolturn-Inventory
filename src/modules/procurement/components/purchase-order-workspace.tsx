@@ -196,7 +196,10 @@ export function PurchaseOrderWorkspace({
   const [receiveQty, setReceiveQty] = useState<Record<string, string>>({});
   const [receiveArea, setReceiveArea] = useState<Record<string, string>>({});
   const [receiveBin, setReceiveBin] = useState<Record<string, string>>({});
+  const [receiveLotNumber, setReceiveLotNumber] = useState<Record<string, string>>({});
+  const [receiveLotExpiration, setReceiveLotExpiration] = useState<Record<string, string>>({});
   const shipAreas = areas.filter((area) => area.locationId === order.shipToLocationId);
+  const itemById = useMemo(() => new Map(items.map((item) => [item.id, item])), [items]);
 
   function run(action: () => Promise<{ ok: boolean; error?: string }>, success?: string) {
     setMessage(null);
@@ -420,23 +423,46 @@ export function PurchaseOrderWorkspace({
                 if (!(quantity > 0)) return null;
                 const areaId = receiveArea[line.id] || shipAreas[0]?.id;
                 if (!areaId) return null;
+                const catalogItem = itemById.get(line.itemId);
+                const lotTracked = catalogItem?.trackingMode === "lot";
+                const lotNumber = (receiveLotNumber[line.id] || "").trim();
+                if (lotTracked && !lotNumber) {
+                  return { error: `Lot number required for ${line.itemName}` } as const;
+                }
                 return {
                   purchaseOrderLineId: line.id,
                   quantity,
                   destinationLocationId: order.shipToLocationId,
                   destinationStorageAreaId: areaId,
                   destinationBinId: receiveBin[line.id] || null,
+                  lotNumber: lotTracked ? lotNumber : null,
+                  expirationDate: lotTracked
+                    ? receiveLotExpiration[line.id] || null
+                    : null,
                 };
               })
               .filter((line): line is NonNullable<typeof line> => Boolean(line));
 
-            if (payloadLines.length === 0) {
+            const lotError = payloadLines.find(
+              (line) => "error" in line && typeof line.error === "string",
+            );
+            if (lotError && "error" in lotError) {
+              setMessage(lotError.error);
+              return;
+            }
+
+            const validLines = payloadLines.filter(
+              (line): line is Extract<typeof line, { purchaseOrderLineId: string }> =>
+                "purchaseOrderLineId" in line,
+            );
+
+            if (validLines.length === 0) {
               setMessage("Enter at least one receive quantity.");
               return;
             }
 
             run(
-              () => receivePurchaseOrderAction(order.id, { lines: payloadLines }),
+              () => receivePurchaseOrderAction(order.id, { lines: validLines }),
               "Receipt posted.",
             );
           }}
@@ -444,12 +470,14 @@ export function PurchaseOrderWorkspace({
           <h3 className="text-lg font-semibold">Receive</h3>
           <p className="text-sm text-muted">
             Enter quantities in purchase units. Stock posts through the inventory receipt ledger.
+            Lot-tracked items require a lot number.
           </p>
           <div className="grid gap-3">
             {receiveable.map((line) => {
               const lineAreas = shipAreas;
               const areaId = receiveArea[line.id] || lineAreas[0]?.id || "";
               const lineBins = bins.filter((bin) => bin.storageAreaId === areaId);
+              const lotTracked = itemById.get(line.itemId)?.trackingMode === "lot";
               return (
                 <div
                   key={line.id}
@@ -459,6 +487,7 @@ export function PurchaseOrderWorkspace({
                     <div className="font-medium">{line.itemName}</div>
                     <div className="text-xs text-muted">
                       Remaining {line.remainingQuantity} {line.purchaseUnitSymbol}
+                      {lotTracked ? " · lot tracked" : ""}
                     </div>
                   </div>
                   <label className="space-y-1 text-sm">
@@ -506,6 +535,38 @@ export function PurchaseOrderWorkspace({
                       ))}
                     </select>
                   </label>
+                  {lotTracked ? (
+                    <>
+                      <label className="space-y-1 text-sm md:col-span-2">
+                        <span className="text-muted">Lot number</span>
+                        <input
+                          required
+                          value={receiveLotNumber[line.id] ?? ""}
+                          onChange={(e) =>
+                            setReceiveLotNumber((current) => ({
+                              ...current,
+                              [line.id]: e.target.value,
+                            }))
+                          }
+                          className="w-full rounded-md border border-border bg-background px-3 py-3 text-base"
+                        />
+                      </label>
+                      <label className="space-y-1 text-sm md:col-span-2">
+                        <span className="text-muted">Expiration (optional)</span>
+                        <input
+                          type="date"
+                          value={receiveLotExpiration[line.id] ?? ""}
+                          onChange={(e) =>
+                            setReceiveLotExpiration((current) => ({
+                              ...current,
+                              [line.id]: e.target.value,
+                            }))
+                          }
+                          className="w-full rounded-md border border-border bg-background px-3 py-3 text-base"
+                        />
+                      </label>
+                    </>
+                  ) : null}
                 </div>
               );
             })}

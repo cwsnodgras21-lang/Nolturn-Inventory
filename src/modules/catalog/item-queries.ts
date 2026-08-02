@@ -28,7 +28,7 @@ export async function listItems(options?: {
   let query = supabase
     .from("items")
     .select(
-      "id, organization_id, name, description, category_id, base_unit_id, default_entry_unit_id, sku, status, requires_variant, allow_negative_stock, created_at, updated_at, item_categories(name), base_unit:units_of_measure!items_base_unit_id_fkey(symbol), entry_unit:units_of_measure!items_default_entry_unit_id_fkey(symbol)",
+      "id, organization_id, name, description, category_id, base_unit_id, default_entry_unit_id, sku, status, requires_variant, allow_negative_stock, tracking_mode, created_at, updated_at, item_categories(name), base_unit:units_of_measure!items_base_unit_id_fkey(symbol), entry_unit:units_of_measure!items_default_entry_unit_id_fkey(symbol)",
     )
     .eq("organization_id", context.organizationId)
     .order("name", { ascending: true });
@@ -58,7 +58,7 @@ export async function getItem(itemId: string): Promise<CatalogItem> {
   const { data, error } = await supabase
     .from("items")
     .select(
-      "id, organization_id, name, description, category_id, base_unit_id, default_entry_unit_id, sku, status, requires_variant, allow_negative_stock, created_at, updated_at, item_categories(name), base_unit:units_of_measure!items_base_unit_id_fkey(symbol), entry_unit:units_of_measure!items_default_entry_unit_id_fkey(symbol)",
+      "id, organization_id, name, description, category_id, base_unit_id, default_entry_unit_id, sku, status, requires_variant, allow_negative_stock, tracking_mode, created_at, updated_at, item_categories(name), base_unit:units_of_measure!items_base_unit_id_fkey(symbol), entry_unit:units_of_measure!items_default_entry_unit_id_fkey(symbol)",
     )
     .eq("organization_id", context.organizationId)
     .eq("id", itemId)

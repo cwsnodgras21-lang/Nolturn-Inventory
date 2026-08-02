@@ -1,7 +1,7 @@
 # Data dictionary
 
 **Last reviewed:** 2026-08-02  
-**Status:** Phase 3.2 schema applied
+**Status:** Phase 3.3 schema applied
 
 ## Implemented tables
 
@@ -19,7 +19,7 @@
 | audit_events | Append-only application audit |
 | units_of_measure | Tenant units |
 | item_categories | Hierarchical categories |
-| items | Catalog masters; no quantity; `allow_negative_stock` enforced on debit |
+| items | Catalog masters; no quantity; `allow_negative_stock`; `tracking_mode` (`quantity`/`lot`) |
 | item_variants | Optional variants |
 | item_unit_conversions | Direct-to-base conversions |
 | item_identifiers | Org-unique normalized identifiers |
@@ -27,12 +27,13 @@
 | storage_bins | Optional bins within an area |
 | inventory_transaction_counters | Per-org transaction number sequence |
 | inventory_transactions | Draft/completed/cancelled/reversed headers; optional `purchase_order_id` |
-| inventory_transaction_lines | Entered quantities; optional `purchase_order_line_id` |
-| inventory_ledger_entries | Immutable signed quantity effects; `effect_role` |
-| inventory_balances | Rebuildable on-hand projection |
+| inventory_transaction_lines | Entered quantities; optional `purchase_order_line_id`; optional `lot_id` |
+| inventory_ledger_entries | Immutable signed quantity effects; `effect_role`; optional `lot_id` |
+| inventory_balances | Rebuildable on-hand projection; optional `lot_id` in unique dims |
+| inventory_lots | Lot masters: number, optional expiration, status, notes |
 | count_sessions | Count headers; statuses draft/in_progress/ready_for_review/completed/cancelled; blind flag |
 | count_session_locations | Assigned locations for a session |
-| count_lines | Frozen expected qty, counted qty, variance, review status, optional reconciliation txn link |
+| count_lines | Frozen expected qty, counted qty, variance, review status, optional reconciliation txn link, optional `lot_id` |
 | suppliers | Tenant suppliers; soft `active`/`inactive` |
 | supplier_contacts | Contacts for a supplier |
 | purchase_order_counters | Per-org PO number sequence |
@@ -41,7 +42,7 @@
 
 ## Permission keys
 
-See `src/lib/permissions/catalog.ts`. Includes inventory/count keys plus `purchasing.read`, `purchasing.manage`, `purchasing.receive`.
+See `src/lib/permissions/catalog.ts`. Includes inventory/count/purchasing keys plus `inventory.lots.read` and `inventory.lots.manage`.
 
 ## RPCs
 
@@ -50,7 +51,7 @@ See `src/lib/permissions/catalog.ts`. Includes inventory/count keys plus `purcha
 | `complete_inventory_transaction(uuid)` | Atomically post draft → ledger + balances |
 | `reverse_inventory_transaction(uuid, text)` | Exact inverse ledger reversal |
 | `reconcile_inventory_balances(uuid)` | Projection vs ledger mismatches |
-| `rebuild_inventory_balances(uuid)` | Recompute balances from ledger |
+| `rebuild_inventory_balances(uuid)` | Recompute balances from ledger (includes lot dims) |
 | `start_count_session(uuid)` | Freeze expected quantities from balances |
 | `submit_count_session_for_review(uuid)` | Move in-progress count to review |
 | `return_count_session_for_correction(uuid)` | Return review to in-progress |
@@ -58,8 +59,8 @@ See `src/lib/permissions/catalog.ts`. Includes inventory/count keys plus `purcha
 | `approve_count_session_reconciliation(uuid)` | Post ± adjustments via completion pipeline |
 | `submit_purchase_order(uuid)` | Draft → submitted |
 | `cancel_purchase_order(uuid)` | Cancel draft/submitted with zero receipts |
-| `receive_purchase_order(uuid, jsonb, text, text)` | Partial/full receive via inventory receipt completion |
+| `receive_purchase_order(uuid, jsonb, text, text)` | Partial/full receive via inventory receipt completion (lot-aware) |
 
 ## Planned (not created)
 
-Lots, expiration, serials, purchase requests/approvals, AP, modules, billing, Nolt execution tables.
+Serials, recalls, purchase requests/approvals, AP, modules, billing, Nolt execution tables.

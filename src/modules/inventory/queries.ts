@@ -26,7 +26,7 @@ export async function listBalances(filters?: {
   let query = supabase
     .from("inventory_balances")
     .select(
-      "id, organization_id, item_id, variant_id, location_id, storage_area_id, bin_id, quantity_on_hand, updated_at, items(name, sku, units_of_measure!items_base_unit_id_fkey(symbol)), item_variants(name), locations(name), storage_areas(name), storage_bins(name)",
+      "id, organization_id, item_id, variant_id, lot_id, location_id, storage_area_id, bin_id, quantity_on_hand, updated_at, items(name, sku, units_of_measure!items_base_unit_id_fkey(symbol)), item_variants(name), inventory_lots(lot_number, expiration_date), locations(name), storage_areas(name), storage_bins(name)",
     )
     .eq("organization_id", context.organizationId)
     .order("updated_at", { ascending: false });
@@ -55,7 +55,8 @@ export async function listBalances(filters?: {
         b.variantName?.toLowerCase().includes(term) ||
         b.locationName?.toLowerCase().includes(term) ||
         b.storageAreaName?.toLowerCase().includes(term) ||
-        b.binName?.toLowerCase().includes(term),
+        b.binName?.toLowerCase().includes(term) ||
+        b.lotNumber?.toLowerCase().includes(term),
     );
   }
 
@@ -137,11 +138,11 @@ export async function listTransactionLines(
   const { data, error } = await supabase
     .from("inventory_transaction_lines")
     .select(
-      `id, organization_id, transaction_id, line_number, item_id, variant_id, entered_quantity, entered_unit_id, conversion_multiplier, base_quantity,
+      `id, organization_id, transaction_id, line_number, item_id, variant_id, lot_id, entered_quantity, entered_unit_id, conversion_multiplier, base_quantity,
       destination_location_id, destination_storage_area_id, destination_bin_id,
       source_location_id, source_storage_area_id, source_bin_id,
       unit_cost, notes, created_at, updated_at,
-      items(name, sku), item_variants(name),
+      items(name, sku), item_variants(name), inventory_lots(lot_number),
       units_of_measure!inventory_transaction_lines_entered_unit_id_fkey(symbol),
       destination_location:locations!inventory_transaction_lines_destination_location_id_fkey(name),
       destination_area:storage_areas!inventory_transaction_lines_destination_storage_area_id_fkey(name),

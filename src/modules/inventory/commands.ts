@@ -353,6 +353,7 @@ export async function addInventoryLineAction(
         source_location_id: input.sourceLocationId ?? null,
         source_storage_area_id: input.sourceStorageAreaId ?? null,
         source_bin_id: input.sourceBinId ?? null,
+        lot_id: input.lotId ?? null,
         unit_cost: input.unitCost ?? null,
         notes: input.notes ?? null,
       })
