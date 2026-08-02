@@ -75,3 +75,11 @@ Yes. Recalls quarantine via `inventory_lots.status`; resolve does not release lo
 ## Completion notes
 
 Phase 3.5 adds deterministic reorder rules and restock planning that create draft POs only. No AI, auto-submit, or forecasting.
+
+Implemented:
+
+- Migrations for permissions, `reorder_rules`, `restock_plan_requests` / `_orders`, RLS
+- `src/modules/reorder/` with calc helpers, queries, commands, item panel, restock workspace
+- Routes: `/inventory/restock`; reorder settings on catalog item detail
+- Docs updated; `appConfig.phase = 3.5`
+- Verified: `db:reset`, `db:bootstrap`, `verify`, `test:rls` (110), `test:e2e` (14)
