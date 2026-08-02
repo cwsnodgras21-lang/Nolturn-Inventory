@@ -1076,6 +1076,7 @@ export type Database = {
           status: string;
           blind_count_enabled: boolean;
           notes: string | null;
+          due_date: string | null;
           created_by: string | null;
           started_by: string | null;
           started_at: string | null;
@@ -1089,6 +1090,7 @@ export type Database = {
           status?: string;
           blind_count_enabled?: boolean;
           notes?: string | null;
+          due_date?: string | null;
           created_by?: string | null;
           started_by?: string | null;
           started_at?: string | null;
@@ -1104,11 +1106,70 @@ export type Database = {
           status?: string;
           blind_count_enabled?: boolean;
           notes?: string | null;
+          due_date?: string | null;
           created_by?: string | null;
           started_by?: string | null;
           started_at?: string | null;
           completed_by?: string | null;
           completed_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      operational_alerts: {
+        Row: {
+          id: string;
+          organization_id: string;
+          alert_type: string;
+          severity: string;
+          entity_type: string;
+          entity_id: string;
+          location_id: string | null;
+          condition_key: string;
+          title: string;
+          description: string;
+          status: string;
+          detected_at: string;
+          acknowledged_by: string | null;
+          acknowledged_at: string | null;
+          resolved_at: string | null;
+        } & Timestamps;
+        Insert: {
+          id?: string;
+          organization_id: string;
+          alert_type: string;
+          severity: string;
+          entity_type: string;
+          entity_id: string;
+          location_id?: string | null;
+          condition_key: string;
+          title: string;
+          description: string;
+          status?: string;
+          detected_at?: string;
+          acknowledged_by?: string | null;
+          acknowledged_at?: string | null;
+          resolved_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          alert_type?: string;
+          severity?: string;
+          entity_type?: string;
+          entity_id?: string;
+          location_id?: string | null;
+          condition_key?: string;
+          title?: string;
+          description?: string;
+          status?: string;
+          detected_at?: string;
+          acknowledged_by?: string | null;
+          acknowledged_at?: string | null;
+          resolved_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -1687,6 +1748,15 @@ export type Database = {
       quarantine_recall_lots: {
         Args: { p_recall_id: string };
         Returns: number;
+      };
+      sync_operational_alerts: {
+        Args: { p_organization_id: string };
+        Returns: {
+          created: number;
+          updated: number;
+          resolved: number;
+          activeConditions: number;
+        };
       };
       start_count_session: {
         Args: { p_session_id: string };

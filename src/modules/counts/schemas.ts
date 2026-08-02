@@ -5,6 +5,7 @@ export const createCountSessionSchema = z.object({
   locationIds: z.array(z.string().uuid()).min(1),
   blindCountEnabled: z.boolean().default(false),
   notes: z.string().trim().max(2000).optional().nullable(),
+  dueDate: z.string().optional().nullable(),
 });
 
 export const updateCountSessionSchema = z.object({
@@ -12,6 +13,7 @@ export const updateCountSessionSchema = z.object({
   notes: z.string().trim().max(2000).optional().nullable(),
   blindCountEnabled: z.boolean().optional(),
   locationIds: z.array(z.string().uuid()).min(1).optional(),
+  dueDate: z.string().optional().nullable(),
 });
 
 export const recordCountLineSchema = z.object({

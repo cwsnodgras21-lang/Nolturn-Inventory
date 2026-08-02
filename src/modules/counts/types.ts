@@ -17,6 +17,7 @@ export type CountSession = {
   status: CountSessionStatus;
   blindCountEnabled: boolean;
   notes: string | null;
+  dueDate: string | null;
   createdBy: string | null;
   startedBy: string | null;
   startedAt: string | null;

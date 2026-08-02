@@ -1,7 +1,7 @@
 # Data dictionary
 
 **Last reviewed:** 2026-08-02  
-**Status:** Phase 3.5 schema applied
+**Status:** Phase 3.6 schema applied
 
 ## Implemented tables
 
@@ -36,7 +36,8 @@
 | reorder_rules | Default (`location_id` null) and location-specific reorder rules; min/target/optional reorder qty; preferred supplier |
 | restock_plan_requests | Idempotency keys for restock → draft PO creation; unique `(organization_id, request_key)` |
 | restock_plan_request_orders | Links a restock request to created purchase orders |
-| count_sessions | Count headers; statuses draft/in_progress/ready_for_review/completed/cancelled; blind flag |
+| count_sessions | Count headers; statuses draft/in_progress/ready_for_review/completed/cancelled; blind flag; optional `due_date` |
+| operational_alerts | Deterministic operational alerts; type/severity/status; condition_key; ack/resolve timestamps |
 | count_session_locations | Assigned locations for a session |
 | count_lines | Frozen expected qty, counted qty, variance, review status, optional reconciliation txn link, optional `lot_id` |
 | suppliers | Tenant suppliers; soft `active`/`inactive` |
@@ -47,7 +48,7 @@
 
 ## Permission keys
 
-See `src/lib/permissions/catalog.ts`. Includes inventory/count/purchasing/lots/recalls keys plus `inventory.reorder.read` and `inventory.reorder.manage`.
+See `src/lib/permissions/catalog.ts`. Includes inventory/count/purchasing/lots/recalls/reorder keys plus `alerts.read` and `alerts.manage`.
 
 ## RPCs
 
@@ -66,7 +67,8 @@ See `src/lib/permissions/catalog.ts`. Includes inventory/count/purchasing/lots/r
 | `submit_purchase_order(uuid)` | Draft → submitted |
 | `cancel_purchase_order(uuid)` | Cancel draft/submitted with zero receipts |
 | `receive_purchase_order(uuid, jsonb, text, text)` | Partial/full receive via inventory receipt completion (lot-aware) |
+| `sync_operational_alerts(uuid)` | Idempotent generate/resolve operational alerts for an organization |
 
 ## Planned (not created)
 
-Serials, patient tracing, external recall feeds, forecasting tables, purchase requests/approvals, AP, modules, billing, Nolt execution tables.
+Serials, patient tracing, external recall feeds, forecasting tables, notification delivery channels, purchase requests/approvals, AP, modules, billing, Nolt execution tables.

@@ -3,7 +3,12 @@ import { test, expect } from "@playwright/test";
 test("home page renders product brand", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByRole("heading", { name: "Nolt Inventory" })).toBeVisible();
-  await expect(page.getByText("Phase 3.5 — Reorder rules and restock planning")).toBeVisible();
+  await expect(page.getByText("Phase 3.6 — Operational alerts")).toBeVisible();
+});
+
+test("alerts route requires authentication", async ({ page }) => {
+  await page.goto("/alerts");
+  await expect(page).toHaveURL(/\/login/);
 });
 
 test("inventory counts route requires authentication", async ({ page }) => {

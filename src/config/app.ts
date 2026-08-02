@@ -4,8 +4,8 @@ export const appConfig = {
   name: "Nolt Inventory",
   shortName: "Nolt",
   company: "NolTurn Solutions",
-  phase: 3.5,
-  phaseLabel: "Phase 3.5 — Reorder rules and restock planning",
+  phase: 3.6,
+  phaseLabel: "Phase 3.6 — Operational alerts",
 } as const;
 
 export type NavItem = {
@@ -30,6 +30,13 @@ export const platformNav: NavItem[] = [
     description: "Stock and transactions",
     status: "available",
     anyOfPermissions: ["inventory.read"],
+  },
+  {
+    href: "/alerts",
+    label: "Alerts",
+    description: "Operational conditions",
+    status: "available",
+    anyOfPermissions: ["alerts.read"],
   },
   {
     href: "/purchasing",

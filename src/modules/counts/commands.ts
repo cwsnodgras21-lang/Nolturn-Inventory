@@ -55,6 +55,7 @@ export async function createCountSessionAction(
         status: "draft",
         blind_count_enabled: input.blindCountEnabled,
         notes: input.notes ?? null,
+        due_date: input.dueDate || null,
         created_by: context.userId,
       })
       .select("id, name")
@@ -142,6 +143,7 @@ export async function updateCountSessionAction(
         ...(input.blindCountEnabled !== undefined
           ? { blind_count_enabled: input.blindCountEnabled }
           : {}),
+        ...(input.dueDate !== undefined ? { due_date: input.dueDate || null } : {}),
       })
       .eq("id", sessionId)
       .eq("organization_id", context.organizationId)

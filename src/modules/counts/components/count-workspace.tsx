@@ -35,6 +35,7 @@ export function CreateCountForm({
   const [name, setName] = useState("");
   const [notes, setNotes] = useState("");
   const [blind, setBlind] = useState(false);
+  const [dueDate, setDueDate] = useState("");
   const [selectedLocations, setSelectedLocations] = useState<string[]>(
     locations[0] ? [locations[0].id] : [],
   );
@@ -57,6 +58,7 @@ export function CreateCountForm({
             name,
             notes: notes.trim() ? notes : null,
             blindCountEnabled: blind,
+            dueDate: dueDate || null,
             locationIds: selectedLocations,
           });
           if (!result.ok) {
@@ -80,6 +82,15 @@ export function CreateCountForm({
           required
           value={name}
           onChange={(e) => setName(e.target.value)}
+          className="w-full rounded-md border border-border bg-background px-3 py-3 text-base"
+        />
+      </label>
+      <label className="space-y-1 text-sm">
+        <span className="text-muted">Due date (optional)</span>
+        <input
+          type="date"
+          value={dueDate}
+          onChange={(e) => setDueDate(e.target.value)}
           className="w-full rounded-md border border-border bg-background px-3 py-3 text-base"
         />
       </label>

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  Bell,
   Boxes,
   ClipboardList,
   LayoutDashboard,
@@ -16,15 +17,23 @@ import { cn } from "@/lib/utils";
 const icons = {
   "/dashboard": LayoutDashboard,
   "/inventory": Boxes,
+  "/alerts": Bell,
   "/purchasing": ClipboardList,
   "/nolt": Sparkles,
   "/administration": Settings2,
 } as const;
 
-function NavLink({ item }: { item: NavItem }) {
+function NavLink({
+  item,
+  openAlertCount,
+}: {
+  item: NavItem;
+  openAlertCount?: number;
+}) {
   const pathname = usePathname();
   const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
   const Icon = icons[item.href as keyof typeof icons] ?? LayoutDashboard;
+  const showBadge = item.href === "/alerts" && (openAlertCount ?? 0) > 0;
 
   return (
     <Link
@@ -41,6 +50,11 @@ function NavLink({ item }: { item: NavItem }) {
         <span className="font-medium">{item.label}</span>
         <span className="truncate text-xs text-muted">{item.description}</span>
       </span>
+      {showBadge ? (
+        <span className="rounded-md bg-warning/20 px-1.5 py-0.5 text-[10px] font-medium text-foreground">
+          {openAlertCount}
+        </span>
+      ) : null}
       {item.status === "planned" ? (
         <span className="text-[10px] uppercase tracking-wide text-warning">Soon</span>
       ) : null}
@@ -51,9 +65,11 @@ function NavLink({ item }: { item: NavItem }) {
 export function Sidebar({
   permissionKeys,
   organizationName,
+  openAlertCount = 0,
 }: {
   permissionKeys: string[];
   organizationName: string;
+  openAlertCount?: number;
 }) {
   const visible = platformNav.filter((item) => {
     if (!item.anyOfPermissions?.length) return true;
@@ -73,7 +89,7 @@ export function Sidebar({
       </div>
       <nav className="flex flex-1 flex-col gap-1 px-2 pb-4" aria-label="Primary">
         {visible.map((item) => (
-          <NavLink key={item.href} item={item} />
+          <NavLink key={item.href} item={item} openAlertCount={openAlertCount} />
         ))}
       </nav>
     </aside>

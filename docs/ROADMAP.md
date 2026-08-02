@@ -125,12 +125,20 @@ Phase 2.1–2.6 delivered catalog, storage, ledger, movements, and reversals.
 - [x] Restock planning workspace → draft POs (grouped by supplier; idempotent)
 - [x] `inventory.reorder.read` / `inventory.reorder.manage` + UI + RLS tests
 
+## Phase 3.6 — Operational alerts
+
+- [x] Centralized `operational_alerts` for stock, expiration, recall, quarantine, overdue count/PO
+- [x] Idempotent sync + auto-resolve; acknowledge / resolve actions
+- [x] Location-scoped RLS; nav badge; `/alerts` UI
+- [x] `alerts.read` / `alerts.manage` + RLS tests
+
 ## Phase 3 (remaining)
 
 - Serial tracking contract
 - Cycle count scheduling
-- Expiration alerts / automated FEFO (future)
+- Automated FEFO (future)
 - Demand forecasting / Nolt recommendations (future)
+- Alert delivery channels (email/SMS/push) and scheduled jobs (future)
 
 ## Phase 4 — Procurement (advanced)
 

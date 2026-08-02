@@ -17,6 +17,7 @@ export function mapCountSession(row: {
   status: string;
   blind_count_enabled: boolean;
   notes: string | null;
+  due_date?: string | null;
   created_by: string | null;
   started_by: string | null;
   started_at: string | null;
@@ -36,6 +37,7 @@ export function mapCountSession(row: {
     status: row.status as CountSessionStatus,
     blindCountEnabled: row.blind_count_enabled,
     notes: row.notes,
+    dueDate: row.due_date ?? null,
     createdBy: row.created_by,
     startedBy: row.started_by,
     startedAt: row.started_at,
