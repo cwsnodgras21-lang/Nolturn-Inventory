@@ -380,10 +380,22 @@ describe.skipIf(!enabled)("Phase 3.4 recall management RLS and workflow", () => 
     expect((balances ?? []).length).toBeGreaterThanOrEqual(2);
 
     await client.rpc("quarantine_recall_lots", { p_recall_id: recall!.id });
-    await client
-      .from("inventory_recalls")
-      .update({ status: "resolved", closed_at: new Date().toISOString() })
-      .eq("id", recall!.id);
+    expect(
+      (
+        await client
+          .from("inventory_recalls")
+          .update({ status: "active" })
+          .eq("id", recall!.id)
+      ).error,
+    ).toBeNull();
+    expect(
+      (
+        await client
+          .from("inventory_recalls")
+          .update({ status: "resolved" })
+          .eq("id", recall!.id)
+      ).error,
+    ).toBeNull();
 
     const { data: lotAfter } = await admin
       .from("inventory_lots")

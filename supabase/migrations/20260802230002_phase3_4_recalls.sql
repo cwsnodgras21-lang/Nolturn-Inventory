@@ -35,7 +35,7 @@ comment on table public.inventory_recalls is
 drop trigger if exists inventory_recalls_set_updated_at on public.inventory_recalls;
 create trigger inventory_recalls_set_updated_at
 before update on public.inventory_recalls
-for each row execute function private.set_updated_at();
+for each row execute function public.set_updated_at();
 
 create table public.inventory_recall_lots (
   id uuid primary key default gen_random_uuid(),
