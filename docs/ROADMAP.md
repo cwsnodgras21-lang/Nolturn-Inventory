@@ -132,6 +132,29 @@ Phase 2.1–2.6 delivered catalog, storage, ledger, movements, and reversals.
 - [x] Location-scoped RLS; nav badge; `/alerts` UI
 - [x] `alerts.read` / `alerts.manage` + RLS tests
 
+## Version 1.0 Release Candidate
+
+- [x] Architecture / security / UX review (`docs/V1_RELEASE_REVIEW.md`)
+- [x] Documentation aligned to shipped capability
+- [x] Security hardening (RPC location checks, FORCE RLS on Phase 3+ tables)
+- [x] UI copy and consistency polish (no new business capabilities)
+- [x] Full verification suite green
+
+## Recommended Version 1.1 (do not implement in V1)
+
+Priority order from the release review:
+
+1. Membership/role admin UI + audit completeness
+2. Alert notification delivery (email first)
+3. Stripe billing
+4. Nolt Intelligence (read-only recommendations)
+5. FEFO picking guidance
+6. Demand forecasting
+7. Serial numbers
+8. Mobile barcode scanning
+9. PandaDoc
+10. Vendor portals / OCR invoice processing
+
 ## Phase 3 (remaining)
 
 - Serial tracking contract

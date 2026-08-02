@@ -1,7 +1,7 @@
 # Architecture
 
 **Last reviewed:** 2026-08-02  
-**Phase:** 3.2 — Purchasing foundation
+**Phase:** Version 1.0 RC (through 3.6 — Operational alerts)
 
 ## Intent
 

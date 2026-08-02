@@ -83,7 +83,7 @@ export default async function AlertsPage({
   return (
     <section className="mx-auto flex w-full max-w-6xl flex-col gap-8">
       <div className="space-y-3">
-        <Badge>Operations</Badge>
+        <Badge>Alerts</Badge>
         <h1 className="text-3xl font-semibold tracking-tight">Alerts</h1>
         <p className="text-muted">
           Deterministic operational alerts from reorder, lots, recalls, counts, and purchasing.

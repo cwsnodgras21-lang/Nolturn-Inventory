@@ -1,7 +1,7 @@
 # Inventory ledger
 
 **Last reviewed:** 2026-08-02  
-**Phase:** 3.4 — Recall management
+**Phase:** Version 1.0 RC (through 3.6 — usable stock + operational alerts)
 
 ## Purpose
 

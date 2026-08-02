@@ -33,14 +33,10 @@ export function PlannedFeature({ title, summary, phase, highlights = [] }: Plann
         <Button href="/dashboard" variant="secondary">
           Back to dashboard
         </Button>
-        <Button href="/login" variant="ghost">
-          Sign-in (planned)
-        </Button>
       </div>
 
       <p className="text-xs text-muted">
-        This screen is intentionally unavailable. No mock inventory, purchasing, or Nolt data is
-        shown here.
+        This capability is intentionally unavailable in Version 1.0. No mock data is shown here.
       </p>
     </section>
   );

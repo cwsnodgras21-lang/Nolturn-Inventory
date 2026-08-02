@@ -63,7 +63,7 @@ export default async function TransactionsPage({
             Receipts, consumption, transfers, and adjustments. Completed documents are immutable.
           </p>
         </div>
-        <Button href="/inventory" variant="ghost">
+        <Button href="/inventory/stock" variant="ghost">
           Current stock
         </Button>
       </div>

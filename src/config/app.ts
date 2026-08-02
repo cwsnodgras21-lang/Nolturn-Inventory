@@ -5,7 +5,7 @@ export const appConfig = {
   shortName: "Nolt",
   company: "NolTurn Solutions",
   phase: 3.6,
-  phaseLabel: "Phase 3.6 — Operational alerts",
+  phaseLabel: "Version 1.0 RC — Phases 1–3.6",
 } as const;
 
 export type NavItem = {

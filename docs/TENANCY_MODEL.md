@@ -1,7 +1,7 @@
 # Tenancy model
 
 **Last reviewed:** 2026-08-02  
-**Status:** Phase 2.6 (location-scoped storage and inventory)
+**Status:** Stable (V1 RC) — location-scoped storage, inventory, purchasing, counts, and alerts
 
 ## Model
 

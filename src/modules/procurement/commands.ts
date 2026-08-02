@@ -219,6 +219,18 @@ export async function removePurchaseOrderLineAction(
     const context = await requirePermission("purchasing.manage");
     const supabase = await createServerSupabaseClient();
 
+    const { data: order } = await supabase
+      .from("purchase_orders")
+      .select("id, status, ship_to_location_id")
+      .eq("id", orderId)
+      .eq("organization_id", context.organizationId)
+      .maybeSingle();
+
+    if (!order || order.status !== "draft") {
+      throw new AppError("VALIDATION", "Lines can only be removed from draft orders.", 400);
+    }
+    await requireLocationAccess(order.ship_to_location_id);
+
     const { error } = await supabase
       .from("purchase_order_lines")
       .delete()
