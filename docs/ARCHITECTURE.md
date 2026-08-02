@@ -47,6 +47,15 @@ Domain under `src/modules/lots/`. Lot tracking extends the existing ledger dimen
 - Completion, reverse, count reconcile, and PO receive reuse the same posting helpers with lot dims.
 - Expiration filters are informational; quarantine/non-active status blocks movements.
 
+## Recall management (Phase 3.4)
+
+Domain under `src/modules/recalls/`. Recalls identify affected lots and quarantine them via the existing lot status model.
+
+- Recall headers + recall-lot links; no second quarantine mechanism.
+- `quarantine_recall_lots` updates linked lots to `quarantined`.
+- Resolve/cancel closes the recall record without releasing quarantined stock.
+- Affected stock views honor restricted location access.
+
 ## Assumptions
 
 1. Shared schema multi-tenancy with `organization_id` ownership.
