@@ -1,13 +1,13 @@
 # Product context
 
 **Last reviewed:** 2026-08-02  
-**Phase:** 3.1 — Inventory counts
+**Phase:** 3.2 — Purchasing foundation
 
 This document describes functionality that **exists today**. Planned work lives in [ROADMAP.md](./ROADMAP.md).
 
 ## Product purpose
 
-Nolt Inventory is a multi-tenant inventory operations platform. Phase 3.1 adds physical inventory count sessions with frozen expected quantities, blind counting, review, and ledger-backed variance reconciliation on top of Phase 2 movements and reversals.
+Nolt Inventory is a multi-tenant inventory operations platform. Phase 3.2 adds suppliers and purchase orders with ledger-backed receiving on top of Phase 3.1 counts and Phase 2 movements.
 
 ## Tech stack
 
@@ -36,21 +36,26 @@ Location-scoped storage areas and optional bins.
 
 ### Inventory counts (Phase 3.1)
 
-- Count sessions assigned to one or more locations
-- Count lines with expected quantity frozen at start
-- Blind count mode (expected hidden from counters; visible to reviewers)
-- Review workflow: accept / reject / return for correction
-- Reconciliation posts `positive_adjustment` / `negative_adjustment` via `complete_inventory_transaction`
-- Permissions `inventory.count.read` / `inventory.count.perform` / `inventory.count.review`
-- UI: `/inventory/counts`, `/new`, `/[id]` (tablet-friendly entry)
+- Count sessions, blind mode, frozen expected quantities, review, ledger reconciliation
+- UI: `/inventory/counts`
+
+### Purchasing foundation (Phase 3.2)
+
+- Tenant-owned suppliers + contacts (soft `active`/`inactive`)
+- Purchase orders and lines with frozen purchase-unit → base conversion
+- Statuses: draft → submitted → partially_received → received (or cancelled)
+- Receiving posts normal `receipt` transactions via `complete_inventory_transaction`
+- Partial receipts, remaining quantity tracking, over-receipt rejection
+- Permissions `purchasing.read` / `purchasing.manage` / `purchasing.receive`
+- UI: `/purchasing`, `/purchasing/suppliers`, `/purchasing/orders`
 
 ## Not implemented
 
-Lots, expiration, serials, cycle-count scheduling, procurement, modules, Stripe, PandaDoc, Nolt.
+Lots, expiration, serials, cycle-count scheduling, purchase requests/approvals, AP/payments, automated reordering, modules, Stripe, PandaDoc, Nolt.
 
 ## Navigation
 
-Inventory is available with `inventory.read`. Counts require `inventory.count.read`. Movement and reverse controls remain permission-gated. Purchasing / Nolt remain planned placeholders.
+Inventory is available with `inventory.read`. Purchasing is available with `purchasing.read`. Counts, movements, and reverse controls remain permission-gated. Nolt remains a planned placeholder.
 
 ## Local setup
 
@@ -76,6 +81,7 @@ npm run test:e2e
 
 ## Code map
 
+- `src/modules/suppliers/` — suppliers + contacts
+- `src/modules/procurement/` — purchase orders + receiving
 - `src/modules/counts/` — count sessions, lines, review, reconciliation UI
 - `src/modules/inventory/` — ledger domain + movement UI
-- `docs/INVENTORY_LEDGER.md`, `docs/PHASE3_1_INSPECTION.md`

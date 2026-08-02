@@ -1,7 +1,7 @@
 # Inventory ledger
 
 **Last reviewed:** 2026-08-02  
-**Phase:** 3.1 — Inventory counts
+**Phase:** 3.2 — Purchasing foundation
 
 ## Purpose
 
@@ -134,10 +134,15 @@ Per-organization counters with type prefixes:
 | `inventory.count.read` | View count sessions and history |
 | `inventory.count.perform` | Create, start, enter, submit counts |
 | `inventory.count.review` | Review variances, return, approve reconciliation |
+| `purchasing.read` | View suppliers and purchase orders |
+| `purchasing.manage` | Create/edit suppliers and draft POs; submit/cancel |
+| `purchasing.receive` | Receive against submitted POs (also needs `inventory.receive`) |
 
 Draft line/header RLS requires movement permissions. Draft line insert/update also requires `user_can_access_location` for non-null source/destination (unauthorized IDs are not persisted; errors do not reveal existence). Completion and reverse RPCs re-check location access as defense in depth.
 
 Count role seed: Owner / Administrator / Inventory Manager / Location Manager → read/perform/review; Staff → read/perform; Read Only → read; Purchasing Manager → none. Location Manager remains location-scoped.
+
+Purchasing role seed: Owner / Administrator / Inventory Manager / Purchasing Manager → read/manage/receive; Location Manager → read/receive (location-scoped); Staff / Read Only → read.
 
 ## Inventory counts (Phase 3.1)
 
@@ -182,6 +187,23 @@ Approve creates normal inventory transactions and calls `complete_inventory_tran
 - Only the reverse RPC may transition `completed` → `reversed` with the link columns
 - Completed/cancelled count sessions and their expected quantities are immutable
 
-## Out of scope (3.1)
+## Purchase order receiving (Phase 3.2)
 
-Lots, expiration, serials, cycle-count scheduling, procurement, Stripe, PandaDoc, Nolt, industry modules.
+PO receiving reuses the receipt engine — it does **not** edit balances directly.
+
+### Flow
+
+1. Lock PO (`FOR UPDATE`); require `purchasing.receive` + `inventory.receive` + destination location access
+2. Reject qty > remaining (purchase units)
+3. Create draft `receipt` with `purchase_order_id`
+4. Insert lines linked via `purchase_order_line_id`, posting **base-unit** quantities using the frozen PO-line conversion multiplier
+5. Call `complete_inventory_transaction`
+6. Increment PO-line `received_quantity`; set PO status to `partially_received` or `received`
+
+Atomic: failed multi-line receives roll back completely. Concurrent receives serialize on the PO row lock.
+
+Standalone receipts (no PO) remain available under `/inventory/receive`.
+
+## Out of scope (3.2)
+
+Lots, expiration, serials, cycle-count scheduling, purchase requests/approvals, AP/payments, automated reordering, Stripe, PandaDoc, Nolt, industry modules.

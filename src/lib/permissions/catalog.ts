@@ -27,6 +27,9 @@ export const PERMISSION_KEYS = [
   "inventory.count.read",
   "inventory.count.perform",
   "inventory.count.review",
+  "purchasing.read",
+  "purchasing.manage",
+  "purchasing.receive",
 ] as const;
 
 export type PermissionKey = (typeof PERMISSION_KEYS)[number];

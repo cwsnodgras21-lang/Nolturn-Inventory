@@ -92,18 +92,25 @@ Phase 2.1–2.6 delivered catalog, storage, ledger, movements, and reversals.
 - [x] `inventory.count.read` / `perform` / `review` + location-scoped RLS
 - [x] Tablet-friendly count UI + RLS tests + docs
 
+## Phase 3.2 — Purchasing foundation
+
+- [x] Suppliers + contacts (soft status)
+- [x] Purchase orders + lines with frozen conversion
+- [x] Submit / cancel / partial+full receive against PO
+- [x] Receiving via existing `receipt` + `complete_inventory_transaction`
+- [x] `purchasing.read` / `manage` / `receive` + location-scoped RLS
+- [x] Purchasing UI + RLS tests + docs
+
 ## Phase 3 (remaining) — Lots and expiration
 
 - Lots, expiration, serial tracking contract
 - Cycle count scheduling
 - Expiration alerts
 
-## Phase 4 — Procurement
+## Phase 4 — Procurement (advanced)
 
-- Suppliers
-- Purchase requests and orders
+- Purchase requests
 - Approval workflow
-- Receiving against POs (partial/full)
 - Cost history
 - Accounting integration boundary only (no full AP)
 

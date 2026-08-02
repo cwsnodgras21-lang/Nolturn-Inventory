@@ -1,7 +1,7 @@
 # Architecture
 
 **Last reviewed:** 2026-08-02  
-**Phase:** 2.6 — Reversals and ledger hardening
+**Phase:** 3.2 — Purchasing foundation
 
 ## Intent
 
@@ -24,6 +24,19 @@ Domain under `src/modules/inventory/`. Quantities come from immutable `inventory
 - **Hardening:** draft line RLS requires accessible locations; tenants cannot invent reversal headers or alter link columns; reconcile/rebuild are adjust-gated.
 
 Details: [INVENTORY_LEDGER.md](./INVENTORY_LEDGER.md).
+
+## Inventory counts (Phase 3.1)
+
+Domain under `src/modules/counts/`. Physical counts freeze expected quantities and reconcile variances as normal ± adjustments through the ledger completion pipeline.
+
+## Purchasing foundation (Phase 3.2)
+
+Domains under `src/modules/suppliers/` and `src/modules/procurement/`.
+
+- Suppliers are tenant-owned with soft status.
+- Purchase orders track ordered/received/remaining in purchase units with a frozen conversion multiplier.
+- `receive_purchase_order` creates a normal inventory `receipt`, calls `complete_inventory_transaction`, then updates PO line quantities and status atomically.
+- No second receiving engine; no direct balance edits.
 
 ## Assumptions
 

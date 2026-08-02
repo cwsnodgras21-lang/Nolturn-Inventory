@@ -55,6 +55,18 @@ export const AUDIT_ACTIONS = {
   INVENTORY_COUNT_RETURNED: "inventory.count.returned",
   INVENTORY_COUNT_LINE_REVIEWED: "inventory.count_line.reviewed",
   INVENTORY_COUNT_COMPLETED: "inventory.count.completed",
+  PURCHASING_SUPPLIER_CREATED: "purchasing.supplier.created",
+  PURCHASING_SUPPLIER_UPDATED: "purchasing.supplier.updated",
+  PURCHASING_SUPPLIER_CONTACT_CREATED: "purchasing.supplier_contact.created",
+  PURCHASING_SUPPLIER_CONTACT_UPDATED: "purchasing.supplier_contact.updated",
+  PURCHASING_SUPPLIER_CONTACT_DELETED: "purchasing.supplier_contact.deleted",
+  PURCHASING_PO_CREATED: "purchasing.po.created",
+  PURCHASING_PO_UPDATED: "purchasing.po.updated",
+  PURCHASING_PO_LINE_ADDED: "purchasing.po_line.added",
+  PURCHASING_PO_LINE_REMOVED: "purchasing.po_line.removed",
+  PURCHASING_PO_SUBMITTED: "purchasing.po.submitted",
+  PURCHASING_PO_CANCELLED: "purchasing.po.cancelled",
+  PURCHASING_PO_RECEIVED: "purchasing.po.received",
 } as const;
 
 export type AuditAction = (typeof AUDIT_ACTIONS)[keyof typeof AUDIT_ACTIONS];

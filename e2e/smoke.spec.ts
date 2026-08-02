@@ -3,11 +3,16 @@ import { test, expect } from "@playwright/test";
 test("home page renders product brand", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByRole("heading", { name: "Nolt Inventory" })).toBeVisible();
-  await expect(page.getByText("Phase 3.1 — Inventory counts")).toBeVisible();
+  await expect(page.getByText("Phase 3.2 — Purchasing foundation")).toBeVisible();
 });
 
 test("inventory counts route requires authentication", async ({ page }) => {
   await page.goto("/inventory/counts");
+  await expect(page).toHaveURL(/\/login/);
+});
+
+test("purchasing orders route requires authentication", async ({ page }) => {
+  await page.goto("/purchasing/orders");
   await expect(page).toHaveURL(/\/login/);
 });
 
