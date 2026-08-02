@@ -1,13 +1,13 @@
 # Product context
 
 **Last reviewed:** 2026-08-02  
-**Phase:** 2.6 — Reversals and ledger hardening
+**Phase:** 3.1 — Inventory counts
 
 This document describes functionality that **exists today**. Planned work lives in [ROADMAP.md](./ROADMAP.md).
 
 ## Product purpose
 
-Nolt Inventory is a multi-tenant inventory operations platform. Phase 2.6 completes Phase 2 inventory operations with transaction reversals, draft location hardening, and ledger reconciliation on top of the immutable ledger and core movements.
+Nolt Inventory is a multi-tenant inventory operations platform. Phase 3.1 adds physical inventory count sessions with frozen expected quantities, blind counting, review, and ledger-backed variance reconciliation on top of Phase 2 movements and reversals.
 
 ## Tech stack
 
@@ -29,23 +29,28 @@ Location-scoped storage areas and optional bins.
 
 ### Inventory ledger, movements, and reversals (Phases 2.4–2.6)
 
-- Transaction headers/lines for `opening_balance`, `positive_adjustment`, `negative_adjustment`, `receipt`, `consumption`, `transfer`, `reversal`
-- Immutable ledger entries (`effect_role` for transfer source/destination) + rebuildable balances
-- Negative-stock enforcement at exact storage dimensions (including reverse inverse debits)
-- Bidirectional original/reversal links; one reversal per completed original
-- Draft creation/update rejects inaccessible source/destination locations
-- Reconciliation RPC compares balances to ledger sums; rebuild remains an adjust-gated recovery tool
-- Permissions `inventory.read` / `inventory.adjust` / `inventory.receive` / `inventory.consume` / `inventory.transfer` / `inventory.reverse`
-- UI: stock, history/filters, movement workspaces, reverse action with reason and linked status
+- Transaction headers/lines for movements + `reversal`
+- Immutable ledger entries + rebuildable balances
+- Negative-stock enforcement, draft location hardening, reverse RPC
 - See [INVENTORY_LEDGER.md](./INVENTORY_LEDGER.md)
+
+### Inventory counts (Phase 3.1)
+
+- Count sessions assigned to one or more locations
+- Count lines with expected quantity frozen at start
+- Blind count mode (expected hidden from counters; visible to reviewers)
+- Review workflow: accept / reject / return for correction
+- Reconciliation posts `positive_adjustment` / `negative_adjustment` via `complete_inventory_transaction`
+- Permissions `inventory.count.read` / `inventory.count.perform` / `inventory.count.review`
+- UI: `/inventory/counts`, `/new`, `/[id]` (tablet-friendly entry)
 
 ## Not implemented
 
-Lots, expiration, counts, procurement, modules, Stripe, PandaDoc, Nolt.
+Lots, expiration, serials, cycle-count scheduling, procurement, modules, Stripe, PandaDoc, Nolt.
 
 ## Navigation
 
-Inventory is available with `inventory.read`. Movement routes require their type-specific permissions. Reverse controls require `inventory.reverse` and appear on eligible completed transaction detail pages. Administration still hosts catalog and storage. Purchasing / Nolt remain planned placeholders.
+Inventory is available with `inventory.read`. Counts require `inventory.count.read`. Movement and reverse controls remain permission-gated. Purchasing / Nolt remain planned placeholders.
 
 ## Local setup
 
@@ -61,8 +66,6 @@ npm run dev
 
 Demo password: `password123`
 
-Bootstrap seeds catalog, storage, and a completed opening balance (IPA + Medium gloves) per primary location.
-
 ## Verification
 
 ```bash
@@ -73,6 +76,6 @@ npm run test:e2e
 
 ## Code map
 
-- `src/modules/inventory/` — ledger domain + movement/reversal UI
-- `src/modules/catalog/`, `src/modules/storage/`
-- `docs/INVENTORY_LEDGER.md`, `docs/PHASE2_6_INSPECTION.md`
+- `src/modules/counts/` — count sessions, lines, review, reconciliation UI
+- `src/modules/inventory/` — ledger domain + movement UI
+- `docs/INVENTORY_LEDGER.md`, `docs/PHASE3_1_INSPECTION.md`

@@ -45,6 +45,16 @@ export const AUDIT_ACTIONS = {
   INVENTORY_CONSUMPTION_COMPLETED: "inventory.consumption.completed",
   INVENTORY_TRANSFER_COMPLETED: "inventory.transfer.completed",
   INVENTORY_NEGATIVE_ADJUSTMENT_COMPLETED: "inventory.negative_adjustment.completed",
+  INVENTORY_COUNT_CREATED: "inventory.count.created",
+  INVENTORY_COUNT_UPDATED: "inventory.count.updated",
+  INVENTORY_COUNT_CANCELLED: "inventory.count.cancelled",
+  INVENTORY_COUNT_STARTED: "inventory.count.started",
+  INVENTORY_COUNT_LINE_ADDED: "inventory.count_line.added",
+  INVENTORY_COUNT_LINE_RECORDED: "inventory.count_line.recorded",
+  INVENTORY_COUNT_SUBMITTED: "inventory.count.submitted",
+  INVENTORY_COUNT_RETURNED: "inventory.count.returned",
+  INVENTORY_COUNT_LINE_REVIEWED: "inventory.count_line.reviewed",
+  INVENTORY_COUNT_COMPLETED: "inventory.count.completed",
 } as const;
 
 export type AuditAction = (typeof AUDIT_ACTIONS)[keyof typeof AUDIT_ACTIONS];

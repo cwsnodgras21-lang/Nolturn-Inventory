@@ -837,6 +837,143 @@ export type Database = {
         };
         Relationships: [];
       };
+      count_sessions: {
+        Row: {
+          id: string;
+          organization_id: string;
+          name: string;
+          status: string;
+          blind_count_enabled: boolean;
+          notes: string | null;
+          created_by: string | null;
+          started_by: string | null;
+          started_at: string | null;
+          completed_by: string | null;
+          completed_at: string | null;
+        } & Timestamps;
+        Insert: {
+          id?: string;
+          organization_id: string;
+          name: string;
+          status?: string;
+          blind_count_enabled?: boolean;
+          notes?: string | null;
+          created_by?: string | null;
+          started_by?: string | null;
+          started_at?: string | null;
+          completed_by?: string | null;
+          completed_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          name?: string;
+          status?: string;
+          blind_count_enabled?: boolean;
+          notes?: string | null;
+          created_by?: string | null;
+          started_by?: string | null;
+          started_at?: string | null;
+          completed_by?: string | null;
+          completed_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      count_session_locations: {
+        Row: {
+          id: string;
+          organization_id: string;
+          count_session_id: string;
+          location_id: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          count_session_id: string;
+          location_id: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          count_session_id?: string;
+          location_id?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      count_lines: {
+        Row: {
+          id: string;
+          organization_id: string;
+          count_session_id: string;
+          item_id: string;
+          variant_id: string | null;
+          location_id: string;
+          storage_area_id: string;
+          bin_id: string | null;
+          expected_quantity: number;
+          counted_quantity: number | null;
+          variance: number | null;
+          status: string;
+          notes: string | null;
+          counted_by: string | null;
+          counted_at: string | null;
+          reviewed_by: string | null;
+          reviewed_at: string | null;
+          reconciliation_transaction_id: string | null;
+        } & Timestamps;
+        Insert: {
+          id?: string;
+          organization_id: string;
+          count_session_id: string;
+          item_id: string;
+          variant_id?: string | null;
+          location_id: string;
+          storage_area_id: string;
+          bin_id?: string | null;
+          expected_quantity?: number;
+          counted_quantity?: number | null;
+          variance?: number | null;
+          status?: string;
+          notes?: string | null;
+          counted_by?: string | null;
+          counted_at?: string | null;
+          reviewed_by?: string | null;
+          reviewed_at?: string | null;
+          reconciliation_transaction_id?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          count_session_id?: string;
+          item_id?: string;
+          variant_id?: string | null;
+          location_id?: string;
+          storage_area_id?: string;
+          bin_id?: string | null;
+          expected_quantity?: number;
+          counted_quantity?: number | null;
+          variance?: number | null;
+          status?: string;
+          notes?: string | null;
+          counted_by?: string | null;
+          counted_at?: string | null;
+          reviewed_by?: string | null;
+          reviewed_at?: string | null;
+          reconciliation_transaction_id?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       permissions: {
         Row: {
           id: string;
@@ -1106,6 +1243,26 @@ export type Database = {
       rebuild_inventory_balances: {
         Args: { p_organization_id: string };
         Returns: number;
+      };
+      start_count_session: {
+        Args: { p_session_id: string };
+        Returns: Database["public"]["Tables"]["count_sessions"]["Row"];
+      };
+      submit_count_session_for_review: {
+        Args: { p_session_id: string };
+        Returns: Database["public"]["Tables"]["count_sessions"]["Row"];
+      };
+      return_count_session_for_correction: {
+        Args: { p_session_id: string };
+        Returns: Database["public"]["Tables"]["count_sessions"]["Row"];
+      };
+      review_count_line: {
+        Args: { p_line_id: string; p_decision: string };
+        Returns: Database["public"]["Tables"]["count_lines"]["Row"];
+      };
+      approve_count_session_reconciliation: {
+        Args: { p_session_id: string };
+        Returns: Database["public"]["Tables"]["count_sessions"]["Row"];
       };
       current_user_has_active_membership: {
         Args: { p_organization_id: string };

@@ -44,6 +44,11 @@ export default async function InventoryHomePage() {
         <Button href="/inventory/transactions" variant="secondary">
           History
         </Button>
+        {can(tenant, "inventory.count.read") ? (
+          <Button href="/inventory/counts" variant="secondary">
+            Counts
+          </Button>
+        ) : null}
         {can(tenant, "inventory.receive") ? (
           <Button href="/inventory/receive">Receive</Button>
         ) : null}

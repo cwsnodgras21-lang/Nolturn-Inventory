@@ -1,7 +1,7 @@
 # Inventory ledger
 
 **Last reviewed:** 2026-08-02  
-**Phase:** 2.6 — Reversals and ledger hardening
+**Phase:** 3.1 — Inventory counts
 
 ## Purpose
 
@@ -131,10 +131,46 @@ Per-organization counters with type prefixes:
 | `inventory.consume` | Consumption |
 | `inventory.transfer` | Transfers |
 | `inventory.reverse` | Reverse completed transactions |
+| `inventory.count.read` | View count sessions and history |
+| `inventory.count.perform` | Create, start, enter, submit counts |
+| `inventory.count.review` | Review variances, return, approve reconciliation |
 
 Draft line/header RLS requires movement permissions. Draft line insert/update also requires `user_can_access_location` for non-null source/destination (unauthorized IDs are not persisted; errors do not reveal existence). Completion and reverse RPCs re-check location access as defense in depth.
 
-Role seed: Owner / Administrator / Inventory Manager / Location Manager → `inventory.reverse` (Location Manager still location-scoped). Purchasing Manager / Staff / Read Only → no reverse.
+Count role seed: Owner / Administrator / Inventory Manager / Location Manager → read/perform/review; Staff → read/perform; Read Only → read; Purchasing Manager → none. Location Manager remains location-scoped.
+
+## Inventory counts (Phase 3.1)
+
+Count sessions verify physical stock **without** editing balances directly.
+
+### Lifecycle
+
+| Status | Meaning |
+| --- | --- |
+| `draft` | Name, locations, blind flag editable |
+| `in_progress` | Expected quantities frozen; counters enter counted qty |
+| `ready_for_review` | Variances reviewable; quantities locked |
+| `completed` | Accepted variances posted as adjustments |
+| `cancelled` | Abandoned; no ledger effect |
+
+RPCs: `start_count_session`, `submit_count_session_for_review`, `return_count_session_for_correction`, `review_count_line`, `approve_count_session_reconciliation`.
+
+### Freeze & blind mode
+
+- On start, non-zero balances in assigned locations become `count_lines` with `expected_quantity` copied from `inventory_balances`
+- Expected quantity is immutable afterward (later movements do not change it)
+- Blind sessions hide expected/variance from performers in the app; reviewers and post-submit states may see both
+- Variance = `counted_quantity - expected_quantity` (base units)
+
+### Reconciliation
+
+Approve creates normal inventory transactions and calls `complete_inventory_transaction`:
+
+- Accepted positive variances → one `positive_adjustment`
+- Accepted negative variances → one `negative_adjustment`
+- Rejected lines are skipped
+- `count_lines.reconciliation_transaction_id` links each posted line
+- Negative stock rules apply unchanged; failed approve is atomic
 
 ## Immutability
 
@@ -144,7 +180,8 @@ Role seed: Owner / Administrator / Inventory Manager / Location Manager → `inv
 - Tenant users cannot write balances directly
 - Tenants cannot create `reversal` drafts or set `reverses_transaction_id` / `reversed_by_transaction_id` directly
 - Only the reverse RPC may transition `completed` → `reversed` with the link columns
+- Completed/cancelled count sessions and their expected quantities are immutable
 
-## Out of scope (2.6)
+## Out of scope (3.1)
 
-Lots, expiration, counts, procurement, Stripe, PandaDoc, Nolt, industry modules.
+Lots, expiration, serials, cycle-count scheduling, procurement, Stripe, PandaDoc, Nolt, industry modules.

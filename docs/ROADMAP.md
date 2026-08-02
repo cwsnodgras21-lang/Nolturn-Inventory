@@ -83,13 +83,20 @@ Unimplemented work only. Implemented behavior belongs in PRODUCT_CONTEXT.md.
 
 Phase 2.1–2.6 delivered catalog, storage, ledger, movements, and reversals.
 
-## Phase 3 — Counts, lots, and expiration
+## Phase 3.1 — Inventory counts
+
+- [x] Count sessions + assigned locations + count lines
+- [x] Blind count mode + frozen expected quantities
+- [x] Review workflow (accept / reject / return)
+- [x] Ledger reconciliation via ± adjustments (`complete_inventory_transaction`)
+- [x] `inventory.count.read` / `perform` / `review` + location-scoped RLS
+- [x] Tablet-friendly count UI + RLS tests + docs
+
+## Phase 3 (remaining) — Lots and expiration
 
 - Lots, expiration, serial tracking contract
-- Count sessions, assignments, reconciliation
-- Variance approval
+- Cycle count scheduling
 - Expiration alerts
-- Mobile-friendly count UX
 
 ## Phase 4 — Procurement
 
