@@ -895,6 +895,82 @@ export type Database = {
         };
         Relationships: [];
       };
+      inventory_recalls: {
+        Row: {
+          id: string;
+          organization_id: string;
+          title: string;
+          recall_number: string;
+          external_reference: string | null;
+          source: string;
+          severity: string;
+          status: string;
+          announced_date: string | null;
+          notes: string | null;
+          created_by: string | null;
+          closed_by: string | null;
+          closed_at: string | null;
+        } & Timestamps;
+        Insert: {
+          id?: string;
+          organization_id: string;
+          title: string;
+          recall_number: string;
+          external_reference?: string | null;
+          source?: string;
+          severity?: string;
+          status?: string;
+          announced_date?: string | null;
+          notes?: string | null;
+          created_by?: string | null;
+          closed_by?: string | null;
+          closed_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          title?: string;
+          recall_number?: string;
+          external_reference?: string | null;
+          source?: string;
+          severity?: string;
+          status?: string;
+          announced_date?: string | null;
+          notes?: string | null;
+          created_by?: string | null;
+          closed_by?: string | null;
+          closed_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      inventory_recall_lots: {
+        Row: {
+          id: string;
+          organization_id: string;
+          recall_id: string;
+          lot_id: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          recall_id: string;
+          lot_id: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          recall_id?: string;
+          lot_id?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       count_sessions: {
         Row: {
           id: string;
@@ -1509,6 +1585,10 @@ export type Database = {
       };
       rebuild_inventory_balances: {
         Args: { p_organization_id: string };
+        Returns: number;
+      };
+      quarantine_recall_lots: {
+        Args: { p_recall_id: string };
         Returns: number;
       };
       start_count_session: {

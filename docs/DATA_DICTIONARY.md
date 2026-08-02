@@ -1,7 +1,7 @@
 # Data dictionary
 
 **Last reviewed:** 2026-08-02  
-**Status:** Phase 3.3 schema applied
+**Status:** Phase 3.4 schema applied
 
 ## Implemented tables
 
@@ -31,6 +31,8 @@
 | inventory_ledger_entries | Immutable signed quantity effects; `effect_role`; optional `lot_id` |
 | inventory_balances | Rebuildable on-hand projection; optional `lot_id` in unique dims |
 | inventory_lots | Lot masters: number, optional expiration, status, notes |
+| inventory_recalls | Recall headers: number, source, severity, status, announced date, notes, closed_at |
+| inventory_recall_lots | Recall ↔ lot attachments; unique `(recall_id, lot_id)` |
 | count_sessions | Count headers; statuses draft/in_progress/ready_for_review/completed/cancelled; blind flag |
 | count_session_locations | Assigned locations for a session |
 | count_lines | Frozen expected qty, counted qty, variance, review status, optional reconciliation txn link, optional `lot_id` |
@@ -42,7 +44,7 @@
 
 ## Permission keys
 
-See `src/lib/permissions/catalog.ts`. Includes inventory/count/purchasing keys plus `inventory.lots.read` and `inventory.lots.manage`.
+See `src/lib/permissions/catalog.ts`. Includes inventory/count/purchasing/lots keys plus `inventory.recalls.read` and `inventory.recalls.manage`.
 
 ## RPCs
 
@@ -52,6 +54,7 @@ See `src/lib/permissions/catalog.ts`. Includes inventory/count/purchasing keys p
 | `reverse_inventory_transaction(uuid, text)` | Exact inverse ledger reversal |
 | `reconcile_inventory_balances(uuid)` | Projection vs ledger mismatches |
 | `rebuild_inventory_balances(uuid)` | Recompute balances from ledger (includes lot dims) |
+| `quarantine_recall_lots(uuid)` | Set all lots on a recall to `quarantined` |
 | `start_count_session(uuid)` | Freeze expected quantities from balances |
 | `submit_count_session_for_review(uuid)` | Move in-progress count to review |
 | `return_count_session_for_correction(uuid)` | Return review to in-progress |
@@ -63,4 +66,4 @@ See `src/lib/permissions/catalog.ts`. Includes inventory/count/purchasing keys p
 
 ## Planned (not created)
 
-Serials, recalls, purchase requests/approvals, AP, modules, billing, Nolt execution tables.
+Serials, patient tracing, external recall feeds, purchase requests/approvals, AP, modules, billing, Nolt execution tables.

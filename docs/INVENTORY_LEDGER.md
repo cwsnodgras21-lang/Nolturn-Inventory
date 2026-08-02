@@ -1,7 +1,7 @@
 # Inventory ledger
 
 **Last reviewed:** 2026-08-02  
-**Phase:** 3.3 — Lot and expiration tracking
+**Phase:** 3.4 — Recall management
 
 ## Purpose
 
@@ -96,6 +96,19 @@ If `items.requires_variant` is true, lines must include a variant belonging to t
 - Expiration views are informational; expiration date alone does not auto-block consumption
 - Lot statuses: `active`, `quarantined`, `depleted`, `expired` (`depleted` syncs when lot on-hand hits zero)
 
+## Recall management (Phase 3.4)
+
+Recalls are operational records over lots — not a second inventory engine.
+
+- Tables: `inventory_recalls`, `inventory_recall_lots`
+- Statuses: `draft` → `active` → `resolved` / `cancelled`
+- Severity: `informational` | `low` | `medium` | `high` | `critical`
+- Attach lots (same org); duplicate attachments blocked
+- `quarantine_recall_lots(uuid)` sets linked lots to `quarantined` (reuses existing movement block)
+- Resolve/cancel sets `closed_at` and does **not** release quarantined lots
+- Ledger history is never rewritten by recall actions
+- Affected stock views filter by accessible locations for restricted members
+
 ## Balances & reconciliation
 
 Unique key uses `UNIQUE NULLS NOT DISTINCT` on:
@@ -150,6 +163,8 @@ Per-organization counters with type prefixes:
 | `purchasing.receive` | Receive against submitted POs (also needs `inventory.receive`) |
 | `inventory.lots.read` | View lots, expiration filters, and lot history |
 | `inventory.lots.manage` | Create/update lots and item tracking mode |
+| `inventory.recalls.read` | View recalls, affected lots, and recall audit history |
+| `inventory.recalls.manage` | Create/manage recalls and quarantine affected lots |
 
 Draft line/header RLS requires movement permissions. Draft line insert/update also requires `user_can_access_location` for non-null source/destination (unauthorized IDs are not persisted; errors do not reveal existence). Completion and reverse RPCs re-check location access as defense in depth.
 
@@ -158,6 +173,8 @@ Count role seed: Owner / Administrator / Inventory Manager / Location Manager �
 Purchasing role seed: Owner / Administrator / Inventory Manager / Purchasing Manager → read/manage/receive; Location Manager → read/receive (location-scoped); Staff / Read Only → read.
 
 Lots role seed: Owner / Administrator / Inventory Manager / Purchasing Manager → read/manage; Location Manager / Staff / Read Only → read.
+
+Recalls role seed: Owner / Administrator / Inventory Manager / Purchasing Manager → read/manage; Location Manager / Staff / Read Only → read.
 
 ## Inventory counts (Phase 3.1)
 
@@ -220,6 +237,6 @@ Atomic: failed multi-line receives roll back completely. Concurrent receives ser
 
 Standalone receipts (no PO) remain available under `/inventory/receive`.
 
-## Out of scope (3.3)
+## Out of scope (3.4)
 
-Serials, recalls, automated FEFO allocation, temperature monitoring, cycle-count scheduling, purchase requests/approvals, AP/payments, automated reordering, Stripe, PandaDoc, Nolt, industry modules.
+Patient tracing/notifications, external recall feeds, FDA integrations, serials, automated FEFO, temperature monitoring, cycle-count scheduling, purchase requests/approvals, AP/payments, automated reordering, Stripe, PandaDoc, Nolt, industry modules.

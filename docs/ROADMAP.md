@@ -109,6 +109,14 @@ Phase 2.1–2.6 delivered catalog, storage, ledger, movements, and reversals.
 - [x] Expired / expiring-soon views (informational)
 - [x] `inventory.lots.read` / `inventory.lots.manage` + UI + RLS tests
 
+## Phase 3.4 — Recall management
+
+- [x] Recall records + recall-lot attachments
+- [x] Affected stock lookup (location-scoped)
+- [x] Quarantine via existing lot status (`quarantine_recall_lots`)
+- [x] Resolve/cancel without releasing quarantined lots
+- [x] `inventory.recalls.read` / `inventory.recalls.manage` + UI + RLS tests
+
 ## Phase 3 (remaining)
 
 - Serial tracking contract
