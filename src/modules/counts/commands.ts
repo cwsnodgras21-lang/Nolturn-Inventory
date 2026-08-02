@@ -337,6 +337,7 @@ export async function addCountLineAction(
         count_session_id: sessionId,
         item_id: input.itemId,
         variant_id: input.variantId ?? null,
+        lot_id: input.lotId ?? null,
         location_id: input.locationId,
         storage_area_id: input.storageAreaId,
         bin_id: input.binId ?? null,

@@ -12,6 +12,7 @@ import { CountWorkspace } from "@/modules/counts/components/count-workspace";
 import { getCountSession, listCountLines } from "@/modules/counts/queries";
 import { shouldRevealExpectedQuantity } from "@/modules/counts/types";
 import { loadAccessibleStorageContext } from "@/modules/inventory/load-context";
+import { listLots } from "@/modules/lots/queries";
 
 export const metadata: Metadata = {
   title: "Count detail",
@@ -44,12 +45,14 @@ export default async function InventoryCountDetailPage({
     throw error;
   }
 
-  const [{ locations, areas, bins }, lines, items, variants, units] = await Promise.all([
+  const canReadLots = can(tenant, "inventory.lots.read");
+  const [{ locations, areas, bins }, lines, items, variants, units, lots] = await Promise.all([
     loadAccessibleStorageContext(tenant),
     listCountLines(id),
     listItems({ status: "active" }),
     listAllVariants(),
     listUnits({ status: "active" }),
+    canReadLots ? listLots() : Promise.resolve([]),
   ]);
 
   const canReview = can(tenant, "inventory.count.review");
@@ -79,6 +82,7 @@ export default async function InventoryCountDetailPage({
         locations={locations}
         areas={areas}
         bins={bins}
+        lots={lots}
         canPerform={can(tenant, "inventory.count.perform")}
         canReview={canReview}
         revealExpected={revealExpected}

@@ -17,6 +17,7 @@ import {
 } from "@/modules/counts/commands";
 import type { CountLine, CountSession } from "@/modules/counts/types";
 import type { CatalogItem, ItemVariant, UnitOfMeasure } from "@/modules/catalog/types";
+import type { InventoryLot } from "@/modules/lots/types";
 import type { StorageArea, StorageBin } from "@/modules/storage/types";
 
 type LocationOption = { id: string; name: string };
@@ -144,6 +145,7 @@ export function CountWorkspace({
   locations,
   areas,
   bins,
+  lots = [],
   canPerform,
   canReview,
   revealExpected,
@@ -156,6 +158,7 @@ export function CountWorkspace({
   locations: LocationOption[];
   areas: StorageArea[];
   bins: StorageBin[];
+  lots?: InventoryLot[];
   canPerform: boolean;
   canReview: boolean;
   revealExpected: boolean;
@@ -176,14 +179,27 @@ export function CountWorkspace({
 
   const [itemId, setItemId] = useState(items[0]?.id ?? "");
   const [variantId, setVariantId] = useState("");
+  const [lotId, setLotId] = useState("");
   const [locationId, setLocationId] = useState(session.locationIds?.[0] ?? locations[0]?.id ?? "");
   const [areaId, setAreaId] = useState("");
   const [binId, setBinId] = useState("");
   const [newCounted, setNewCounted] = useState("0");
 
+  const selectedItem = items.find((item) => item.id === itemId);
+  const requiresLot = selectedItem?.trackingMode === "lot";
   const itemVariants = useMemo(
     () => variants.filter((variant) => variant.itemId === itemId),
     [variants, itemId],
+  );
+  const itemLots = useMemo(
+    () =>
+      lots.filter(
+        (lot) =>
+          lot.itemId === itemId &&
+          lot.variantId === (variantId || null) &&
+          (lot.status === "active" || lot.status === "quarantined" || lot.status === "depleted"),
+      ),
+    [lots, itemId, variantId],
   );
   const locationAreas = useMemo(
     () => areas.filter((area) => area.locationId === locationId),
@@ -354,6 +370,7 @@ export function CountWorkspace({
           <thead className="border-b border-border bg-surface text-muted">
             <tr>
               <th className="px-3 py-3 font-medium">Item</th>
+              <th className="px-3 py-3 font-medium">Lot</th>
               <th className="px-3 py-3 font-medium">Storage</th>
               {revealExpected ? <th className="px-3 py-3 font-medium">Expected</th> : null}
               <th className="px-3 py-3 font-medium">Counted</th>
@@ -372,6 +389,7 @@ export function CountWorkspace({
                     {line.variantName ? ` · ${line.variantName}` : ""}
                   </div>
                 </td>
+                <td className="px-3 py-3 font-mono text-xs text-muted">{line.lotNumber ?? "—"}</td>
                 <td className="px-3 py-3 text-muted">
                   {line.locationName} / {line.storageAreaName}
                   {line.binName ? ` / ${line.binName}` : ""}
@@ -485,7 +503,7 @@ export function CountWorkspace({
             {lines.length === 0 ? (
               <tr>
                 <td
-                  colSpan={revealExpected ? 7 : 5}
+                  colSpan={revealExpected ? 8 : 6}
                   className="px-3 py-8 text-center text-muted"
                 >
                   {session.status === "draft"
@@ -506,9 +524,14 @@ export function CountWorkspace({
             if (pending || !effectiveAreaId) return;
             setMessage(null);
             startTransition(async () => {
+              if (requiresLot && !lotId) {
+                setMessage("Select a lot for this item.");
+                return;
+              }
               const result = await addCountLineAction(session.id, {
                 itemId,
                 variantId: variantId || null,
+                lotId: requiresLot ? lotId : null,
                 locationId,
                 storageAreaId: effectiveAreaId,
                 binId: effectiveBinId || null,
@@ -519,6 +542,7 @@ export function CountWorkspace({
                 return;
               }
               setNewCounted("0");
+              setLotId("");
               refresh();
             });
           }}
@@ -536,12 +560,14 @@ export function CountWorkspace({
               onChange={(e) => {
                 setItemId(e.target.value);
                 setVariantId("");
+                setLotId("");
               }}
               className="w-full rounded-md border border-border bg-background px-3 py-3 text-base"
             >
               {items.map((item) => (
                 <option key={item.id} value={item.id}>
                   {item.name}
+                  {item.trackingMode === "lot" ? " · lot" : ""}
                 </option>
               ))}
             </select>
@@ -551,13 +577,35 @@ export function CountWorkspace({
               <span className="text-muted">Variant</span>
               <select
                 value={variantId}
-                onChange={(e) => setVariantId(e.target.value)}
+                onChange={(e) => {
+                  setVariantId(e.target.value);
+                  setLotId("");
+                }}
                 className="w-full rounded-md border border-border bg-background px-3 py-3 text-base"
               >
                 <option value="">Select variant</option>
                 {itemVariants.map((variant) => (
                   <option key={variant.id} value={variant.id}>
                     {variant.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : null}
+          {requiresLot ? (
+            <label className="space-y-1 text-sm">
+              <span className="text-muted">Lot</span>
+              <select
+                required
+                value={lotId}
+                onChange={(e) => setLotId(e.target.value)}
+                className="w-full rounded-md border border-border bg-background px-3 py-3 text-base"
+              >
+                <option value="">Select lot</option>
+                {itemLots.map((lot) => (
+                  <option key={lot.id} value={lot.id}>
+                    {lot.lotNumber}
+                    {lot.expirationDate ? ` · exp ${lot.expirationDate}` : ""}
                   </option>
                 ))}
               </select>

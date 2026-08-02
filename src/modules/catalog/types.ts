@@ -46,6 +46,8 @@ export const IDENTIFIER_TYPES = [
 ] as const;
 export type IdentifierType = (typeof IDENTIFIER_TYPES)[number];
 
+export type TrackingMode = "quantity" | "lot";
+
 export type CatalogItem = {
   id: string;
   organizationId: string;
@@ -58,6 +60,7 @@ export type CatalogItem = {
   status: CatalogStatus;
   requiresVariant: boolean;
   allowNegativeStock: boolean;
+  trackingMode: TrackingMode;
   createdAt: string;
   updatedAt: string;
   categoryName?: string | null;

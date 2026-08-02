@@ -32,6 +32,9 @@ export const receivePurchaseOrderSchema = z.object({
         destinationStorageAreaId: z.string().uuid(),
         destinationBinId: z.string().uuid().nullable().optional(),
         unitCost: z.number().nonnegative().nullable().optional(),
+        lotId: z.string().uuid().nullable().optional(),
+        lotNumber: z.string().trim().min(1).max(120).nullable().optional(),
+        expirationDate: z.string().nullable().optional(),
       }),
     )
     .min(1),

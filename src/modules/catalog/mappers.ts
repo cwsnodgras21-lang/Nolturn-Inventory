@@ -46,6 +46,7 @@ type ItemRow = {
   status: string;
   requires_variant: boolean;
   allow_negative_stock: boolean;
+  tracking_mode?: string | null;
   created_at: string;
   updated_at: string;
   item_categories?: { name: string } | { name: string }[] | null;
@@ -104,6 +105,7 @@ export function mapItem(row: ItemRow): CatalogItem {
     status: row.status as CatalogItem["status"],
     requiresVariant: row.requires_variant,
     allowNegativeStock: row.allow_negative_stock,
+    trackingMode: (row.tracking_mode === "lot" ? "lot" : "quantity") as CatalogItem["trackingMode"],
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     categoryName: category?.name ?? null,

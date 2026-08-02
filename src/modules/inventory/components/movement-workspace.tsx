@@ -18,6 +18,8 @@ import type {
   InventoryTransactionType,
 } from "@/modules/inventory/types";
 import type { CatalogItem, ItemVariant, UnitOfMeasure } from "@/modules/catalog/types";
+import { createLotAction } from "@/modules/lots/commands";
+import type { InventoryLot } from "@/modules/lots/types";
 import type { StorageArea, StorageBin } from "@/modules/storage/types";
 
 type LocationOption = { id: string; name: string };
@@ -162,7 +164,9 @@ export function TransactionWorkspace({
   locations,
   areas,
   bins,
+  lots = [],
   canManage,
+  canManageLots = false,
   canReverse = false,
   linkedOriginalNumber = null,
   linkedReversalNumber = null,
@@ -175,7 +179,9 @@ export function TransactionWorkspace({
   locations: LocationOption[];
   areas: StorageArea[];
   bins: StorageBin[];
+  lots?: InventoryLot[];
   canManage: boolean;
+  canManageLots?: boolean;
   canReverse?: boolean;
   linkedOriginalNumber?: string | null;
   linkedReversalNumber?: string | null;
@@ -210,11 +216,26 @@ export function TransactionWorkspace({
   const [destBinId, setDestBinId] = useState("");
   const [unitCost, setUnitCost] = useState("");
   const [lineNotes, setLineNotes] = useState("");
+  const [lotId, setLotId] = useState("");
+  const [newLotNumber, setNewLotNumber] = useState("");
+  const [newLotExpiration, setNewLotExpiration] = useState("");
+  const [createNewLot, setCreateNewLot] = useState(false);
 
   const selectedItem = items.find((item) => item.id === itemId);
+  const requiresLot = selectedItem?.trackingMode === "lot";
   const itemVariants = useMemo(
     () => variants.filter((variant) => variant.itemId === itemId),
     [variants, itemId],
+  );
+  const itemLots = useMemo(
+    () =>
+      lots.filter(
+        (lot) =>
+          lot.itemId === itemId &&
+          lot.variantId === (variantId || null) &&
+          lot.status === "active",
+      ),
+    [lots, itemId, variantId],
   );
   const sourceAreas = useMemo(
     () => areas.filter((area) => area.locationId === sourceLocationId),
@@ -293,6 +314,7 @@ export function TransactionWorkspace({
             <tr>
               <th className="px-3 py-2 font-medium">#</th>
               <th className="px-3 py-2 font-medium">Item</th>
+              <th className="px-3 py-2 font-medium">Lot</th>
               <th className="px-3 py-2 font-medium">Qty</th>
               {showSource ? <th className="px-3 py-2 font-medium">From</th> : null}
               {showDest ? <th className="px-3 py-2 font-medium">To</th> : null}
@@ -309,6 +331,9 @@ export function TransactionWorkspace({
                     {line.itemSku}
                     {line.variantName ? ` · ${line.variantName}` : ""}
                   </div>
+                </td>
+                <td className="px-3 py-2 font-mono text-xs text-muted">
+                  {line.lotNumber ?? "—"}
                 </td>
                 <td className="px-3 py-2">
                   {line.enteredQuantity} {line.enteredUnitSymbol}
@@ -353,7 +378,7 @@ export function TransactionWorkspace({
             {lines.length === 0 ? (
               <tr>
                 <td
-                  colSpan={4 + (showSource ? 1 : 0) + (showDest ? 1 : 0)}
+                  colSpan={5 + (showSource ? 1 : 0) + (showDest ? 1 : 0)}
                   className="px-3 py-6 text-center text-muted"
                 >
                   No lines yet.
@@ -373,9 +398,38 @@ export function TransactionWorkspace({
               if (pending) return;
               setMessage(null);
               startTransition(async () => {
+                let resolvedLotId: string | null = lotId || null;
+                if (requiresLot && createNewLot) {
+                  if (!canManageLots) {
+                    setMessage("You do not have permission to create lots.");
+                    return;
+                  }
+                  if (!newLotNumber.trim()) {
+                    setMessage("Enter a lot number.");
+                    return;
+                  }
+                  const created = await createLotAction({
+                    itemId,
+                    variantId: variantId || null,
+                    lotNumber: newLotNumber.trim(),
+                    expirationDate: newLotExpiration || null,
+                    status: "active",
+                  });
+                  if (!created.ok) {
+                    setMessage(created.error);
+                    return;
+                  }
+                  resolvedLotId = created.data.id;
+                }
+                if (requiresLot && !resolvedLotId) {
+                  setMessage("Select or create a lot for this item.");
+                  return;
+                }
+
                 const result = await addInventoryLineAction(transaction.id, {
                   itemId,
                   variantId: variantId || null,
+                  lotId: requiresLot ? resolvedLotId : null,
                   enteredQuantity: Number(enteredQuantity),
                   enteredUnitId,
                   sourceLocationId: showSource ? sourceLocationId : null,
@@ -393,6 +447,10 @@ export function TransactionWorkspace({
                 }
                 setLineNotes("");
                 setUnitCost("");
+                setLotId("");
+                setNewLotNumber("");
+                setNewLotExpiration("");
+                setCreateNewLot(false);
                 setMessage("Line added.");
                 refresh();
               });
@@ -409,12 +467,15 @@ export function TransactionWorkspace({
                   const nextItem = items.find((item) => item.id === next);
                   setEnteredUnitId(nextItem?.defaultEntryUnitId ?? enteredUnitId);
                   setVariantId("");
+                  setLotId("");
+                  setCreateNewLot(false);
                 }}
                 className="w-full rounded-md border border-border bg-background px-3 py-2"
               >
                 {items.map((item) => (
                   <option key={item.id} value={item.id}>
                     {item.name} ({item.sku})
+                    {item.trackingMode === "lot" ? " · lot" : ""}
                   </option>
                 ))}
               </select>
@@ -423,7 +484,10 @@ export function TransactionWorkspace({
               <span className="text-muted">Variant</span>
               <select
                 value={variantId}
-                onChange={(e) => setVariantId(e.target.value)}
+                onChange={(e) => {
+                  setVariantId(e.target.value);
+                  setLotId("");
+                }}
                 required={Boolean(selectedItem?.requiresVariant)}
                 className="w-full rounded-md border border-border bg-background px-3 py-2"
               >
@@ -576,6 +640,61 @@ export function TransactionWorkspace({
                     ))}
                   </select>
                 </label>
+              </>
+            ) : null}
+
+            {requiresLot ? (
+              <>
+                <label className="space-y-1 text-sm sm:col-span-2">
+                  <span className="text-muted">Lot</span>
+                  <select
+                    value={createNewLot ? "__new__" : lotId}
+                    onChange={(e) => {
+                      if (e.target.value === "__new__") {
+                        setCreateNewLot(true);
+                        setLotId("");
+                        return;
+                      }
+                      setCreateNewLot(false);
+                      setLotId(e.target.value);
+                    }}
+                    required={!createNewLot}
+                    className="w-full rounded-md border border-border bg-background px-3 py-2"
+                  >
+                    <option value="">Select lot</option>
+                    {itemLots.map((lot) => (
+                      <option key={lot.id} value={lot.id}>
+                        {lot.lotNumber}
+                        {lot.expirationDate ? ` · exp ${lot.expirationDate}` : ""}
+                      </option>
+                    ))}
+                    {canManageLots && showDest ? (
+                      <option value="__new__">Create new lot…</option>
+                    ) : null}
+                  </select>
+                </label>
+                {createNewLot ? (
+                  <>
+                    <label className="space-y-1 text-sm">
+                      <span className="text-muted">New lot number</span>
+                      <input
+                        required
+                        value={newLotNumber}
+                        onChange={(e) => setNewLotNumber(e.target.value)}
+                        className="w-full rounded-md border border-border bg-background px-3 py-2"
+                      />
+                    </label>
+                    <label className="space-y-1 text-sm">
+                      <span className="text-muted">Expiration (optional)</span>
+                      <input
+                        type="date"
+                        value={newLotExpiration}
+                        onChange={(e) => setNewLotExpiration(e.target.value)}
+                        className="w-full rounded-md border border-border bg-background px-3 py-2"
+                      />
+                    </label>
+                  </>
+                ) : null}
               </>
             ) : null}
 

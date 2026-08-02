@@ -67,6 +67,10 @@ export const AUDIT_ACTIONS = {
   PURCHASING_PO_SUBMITTED: "purchasing.po.submitted",
   PURCHASING_PO_CANCELLED: "purchasing.po.cancelled",
   PURCHASING_PO_RECEIVED: "purchasing.po.received",
+  INVENTORY_LOT_CREATED: "inventory.lot.created",
+  INVENTORY_LOT_UPDATED: "inventory.lot.updated",
+  INVENTORY_LOT_STATUS_CHANGED: "inventory.lot.status_changed",
+  INVENTORY_ITEM_TRACKING_MODE_CHANGED: "inventory.item.tracking_mode_changed",
 } as const;
 
 export type AuditAction = (typeof AUDIT_ACTIONS)[keyof typeof AUDIT_ACTIONS];

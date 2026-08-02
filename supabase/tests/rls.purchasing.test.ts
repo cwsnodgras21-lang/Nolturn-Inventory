@@ -89,6 +89,7 @@ describe.skipIf(!enabled)("Phase 3.2 purchasing RLS and receiving", () => {
       .eq("storage_area_id", fridgeArea)
       .eq("bin_id", fridgeBin)
       .is("variant_id", null)
+      .is("lot_id", null)
       .maybeSingle();
     return Number(data?.quantity_on_hand ?? 0);
   }

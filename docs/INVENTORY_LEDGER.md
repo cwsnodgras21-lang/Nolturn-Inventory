@@ -1,7 +1,7 @@
 # Inventory ledger
 
 **Last reviewed:** 2026-08-02  
-**Phase:** 3.2 — Purchasing foundation
+**Phase:** 3.3 — Lot and expiration tracking
 
 ## Purpose
 
@@ -10,9 +10,10 @@ Stock quantities are derived from an immutable ledger. `items` never store on-ha
 ## Layers
 
 1. **`inventory_transactions`** — business header
-2. **`inventory_transaction_lines`** — entered item/unit/qty with source and/or destination storage
+2. **`inventory_transaction_lines`** — entered item/unit/qty with source and/or destination storage and optional `lot_id`
 3. **`inventory_ledger_entries`** — immutable signed `quantity_delta` in base units (`effect_role` distinguishes transfer sides)
-4. **`inventory_balances`** — projected on-hand by org/item/variant/location/area/bin
+4. **`inventory_balances`** — projected on-hand by org/item/variant/lot/location/area/bin
+5. **`inventory_lots`** — lot masters (number, optional expiration, status) for lot-tracked items
 
 ## Transaction types
 
@@ -85,11 +86,21 @@ One reversal per original (unique partial indexes + status guard). Concurrent at
 
 If `items.requires_variant` is true, lines must include a variant belonging to the item.
 
+## Lot tracking (Phase 3.3)
+
+- `items.tracking_mode`: `quantity` (default) or `lot`
+- Lot-tracked lines/ledger/balances require `lot_id`; quantity-only items must keep `lot_id` null
+- Lot must match organization, item, and variant; non-`active` lots are blocked from movements (except reversals)
+- Transfers use one `lot_id` on the line for both sides; reversals copy the original lot
+- Tracking mode cannot change after ledger activity for the item without a controlled migration
+- Expiration views are informational; expiration date alone does not auto-block consumption
+- Lot statuses: `active`, `quarantined`, `depleted`, `expired` (`depleted` syncs when lot on-hand hits zero)
+
 ## Balances & reconciliation
 
 Unique key uses `UNIQUE NULLS NOT DISTINCT` on:
 
-`(organization_id, item_id, variant_id, location_id, storage_area_id, bin_id)`
+`(organization_id, item_id, variant_id, location_id, storage_area_id, bin_id, lot_id)`
 
 Reconcile (admin/dev-safe mismatch detection; requires `inventory.adjust`):
 
@@ -137,12 +148,16 @@ Per-organization counters with type prefixes:
 | `purchasing.read` | View suppliers and purchase orders |
 | `purchasing.manage` | Create/edit suppliers and draft POs; submit/cancel |
 | `purchasing.receive` | Receive against submitted POs (also needs `inventory.receive`) |
+| `inventory.lots.read` | View lots, expiration filters, and lot history |
+| `inventory.lots.manage` | Create/update lots and item tracking mode |
 
 Draft line/header RLS requires movement permissions. Draft line insert/update also requires `user_can_access_location` for non-null source/destination (unauthorized IDs are not persisted; errors do not reveal existence). Completion and reverse RPCs re-check location access as defense in depth.
 
 Count role seed: Owner / Administrator / Inventory Manager / Location Manager → read/perform/review; Staff → read/perform; Read Only → read; Purchasing Manager → none. Location Manager remains location-scoped.
 
 Purchasing role seed: Owner / Administrator / Inventory Manager / Purchasing Manager → read/manage/receive; Location Manager → read/receive (location-scoped); Staff / Read Only → read.
+
+Lots role seed: Owner / Administrator / Inventory Manager / Purchasing Manager → read/manage; Location Manager / Staff / Read Only → read.
 
 ## Inventory counts (Phase 3.1)
 
@@ -162,7 +177,7 @@ RPCs: `start_count_session`, `submit_count_session_for_review`, `return_count_se
 
 ### Freeze & blind mode
 
-- On start, non-zero balances in assigned locations become `count_lines` with `expected_quantity` copied from `inventory_balances`
+- On start, non-zero balances in assigned locations become `count_lines` with `expected_quantity` copied from `inventory_balances` (including `lot_id` when present)
 - Expected quantity is immutable afterward (later movements do not change it)
 - Blind sessions hide expected/variance from performers in the app; reviewers and post-submit states may see both
 - Variance = `counted_quantity - expected_quantity` (base units)
@@ -197,13 +212,14 @@ PO receiving reuses the receipt engine — it does **not** edit balances directl
 2. Reject qty > remaining (purchase units)
 3. Create draft `receipt` with `purchase_order_id`
 4. Insert lines linked via `purchase_order_line_id`, posting **base-unit** quantities using the frozen PO-line conversion multiplier
-5. Call `complete_inventory_transaction`
-6. Increment PO-line `received_quantity`; set PO status to `partially_received` or `received`
+5. Resolve/create `lot_id` via `ensure_inventory_lot` when the item is lot-tracked (`lot_id` or `lot_number` + optional `expiration_date` in receive JSON)
+6. Call `complete_inventory_transaction`
+7. Increment PO-line `received_quantity`; set PO status to `partially_received` or `received`
 
 Atomic: failed multi-line receives roll back completely. Concurrent receives serialize on the PO row lock.
 
 Standalone receipts (no PO) remain available under `/inventory/receive`.
 
-## Out of scope (3.2)
+## Out of scope (3.3)
 
-Lots, expiration, serials, cycle-count scheduling, purchase requests/approvals, AP/payments, automated reordering, Stripe, PandaDoc, Nolt, industry modules.
+Serials, recalls, automated FEFO allocation, temperature monitoring, cycle-count scheduling, purchase requests/approvals, AP/payments, automated reordering, Stripe, PandaDoc, Nolt, industry modules.

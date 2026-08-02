@@ -71,6 +71,7 @@ export type InventoryTransactionLine = {
   sourceLocationId: string | null;
   sourceStorageAreaId: string | null;
   sourceBinId: string | null;
+  lotId: string | null;
   unitCost: number | null;
   notes: string | null;
   createdAt: string;
@@ -85,6 +86,7 @@ export type InventoryTransactionLine = {
   sourceLocationName?: string | null;
   sourceStorageAreaName?: string | null;
   sourceBinName?: string | null;
+  lotNumber?: string | null;
 };
 
 export type InventoryBalance = {
@@ -95,6 +97,7 @@ export type InventoryBalance = {
   locationId: string;
   storageAreaId: string;
   binId: string | null;
+  lotId: string | null;
   quantityOnHand: number;
   updatedAt: string;
   itemName?: string | null;
@@ -103,6 +106,8 @@ export type InventoryBalance = {
   locationName?: string | null;
   storageAreaName?: string | null;
   binName?: string | null;
+  lotNumber?: string | null;
+  expirationDate?: string | null;
   baseUnitSymbol?: string | null;
 };
 
@@ -116,6 +121,7 @@ export type InventoryLedgerEntry = {
   locationId: string;
   storageAreaId: string;
   binId: string | null;
+  lotId: string | null;
   quantityDelta: number;
   effectRole?: string;
   occurredAt: string;

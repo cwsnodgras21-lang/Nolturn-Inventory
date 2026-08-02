@@ -52,6 +52,7 @@ export function mapTransactionLine(row: {
   line_number: number;
   item_id: string;
   variant_id: string | null;
+  lot_id?: string | null;
   entered_quantity: number | string;
   entered_unit_id: string;
   conversion_multiplier: number | string;
@@ -68,6 +69,7 @@ export function mapTransactionLine(row: {
   updated_at: string;
   items?: { name: string; sku: string } | { name: string; sku: string }[] | null;
   item_variants?: { name: string } | { name: string }[] | null;
+  inventory_lots?: { lot_number: string } | { lot_number: string }[] | null;
   units_of_measure?: { symbol: string } | { symbol: string }[] | null;
   locations?: { name: string } | { name: string }[] | null;
   storage_areas?: { name: string } | { name: string }[] | null;
@@ -87,6 +89,7 @@ export function mapTransactionLine(row: {
     lineNumber: row.line_number,
     itemId: row.item_id,
     variantId: row.variant_id,
+    lotId: row.lot_id ?? null,
     enteredQuantity: Number(row.entered_quantity),
     enteredUnitId: row.entered_unit_id,
     conversionMultiplier: Number(row.conversion_multiplier),
@@ -104,6 +107,7 @@ export function mapTransactionLine(row: {
     itemName: item?.name ?? null,
     itemSku: item?.sku ?? null,
     variantName: asSingle(row.item_variants)?.name ?? null,
+    lotNumber: asSingle(row.inventory_lots)?.lot_number ?? null,
     enteredUnitSymbol: asSingle(row.units_of_measure)?.symbol ?? null,
     destinationLocationName:
       asSingle(row.destination_location)?.name ?? asSingle(row.locations)?.name ?? null,
@@ -122,6 +126,7 @@ export function mapBalance(row: {
   organization_id: string;
   item_id: string;
   variant_id: string | null;
+  lot_id?: string | null;
   location_id: string;
   storage_area_id: string;
   bin_id: string | null;
@@ -136,16 +141,22 @@ export function mapBalance(row: {
       }[]
     | null;
   item_variants?: { name: string } | { name: string }[] | null;
+  inventory_lots?:
+    | { lot_number: string; expiration_date: string | null }
+    | { lot_number: string; expiration_date: string | null }[]
+    | null;
   locations?: { name: string } | { name: string }[] | null;
   storage_areas?: { name: string } | { name: string }[] | null;
   storage_bins?: { name: string } | { name: string }[] | null;
 }): InventoryBalance {
   const item = asSingle(row.items);
+  const lot = asSingle(row.inventory_lots);
   return {
     id: row.id,
     organizationId: row.organization_id,
     itemId: row.item_id,
     variantId: row.variant_id,
+    lotId: row.lot_id ?? null,
     locationId: row.location_id,
     storageAreaId: row.storage_area_id,
     binId: row.bin_id,
@@ -154,6 +165,8 @@ export function mapBalance(row: {
     itemName: item?.name ?? null,
     itemSku: item?.sku ?? null,
     variantName: asSingle(row.item_variants)?.name ?? null,
+    lotNumber: lot?.lot_number ?? null,
+    expirationDate: lot?.expiration_date ?? null,
     locationName: asSingle(row.locations)?.name ?? null,
     storageAreaName: asSingle(row.storage_areas)?.name ?? null,
     binName: asSingle(row.storage_bins)?.name ?? null,
@@ -186,6 +199,18 @@ export function mapInventoryDbError(message: string | undefined): string {
   }
   if (text.includes("insufficient stock")) {
     return "Insufficient stock at the selected source storage.";
+  }
+  if (text.includes("lot-tracked items require a lot")) {
+    return "Select or create a lot for this item.";
+  }
+  if (text.includes("quantity-tracked items cannot reference a lot")) {
+    return "Quantity-tracked items cannot reference a lot.";
+  }
+  if (text.includes("lot is not available") || text.includes("lot must be active")) {
+    return "This lot is not available for inventory movements.";
+  }
+  if (text.includes("lot does not match") || text.includes("lot must belong")) {
+    return "The selected lot does not match this item.";
   }
   if (text.includes("negative adjustment requires a reason")) {
     return "Negative adjustments require a reason.";

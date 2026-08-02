@@ -54,6 +54,7 @@ export function mapCountLine(row: {
   count_session_id: string;
   item_id: string;
   variant_id: string | null;
+  lot_id?: string | null;
   location_id: string;
   storage_area_id: string;
   bin_id: string | null;
@@ -82,6 +83,7 @@ export function mapCountLine(row: {
       }[]
     | null;
   item_variants?: { name: string } | { name: string }[] | null;
+  inventory_lots?: { lot_number: string } | { lot_number: string }[] | null;
   locations?: { name: string } | { name: string }[] | null;
   storage_areas?: { name: string } | { name: string }[] | null;
   storage_bins?: { name: string } | { name: string }[] | null;
@@ -93,6 +95,7 @@ export function mapCountLine(row: {
     countSessionId: row.count_session_id,
     itemId: row.item_id,
     variantId: row.variant_id,
+    lotId: row.lot_id ?? null,
     locationId: row.location_id,
     storageAreaId: row.storage_area_id,
     binId: row.bin_id,
@@ -111,6 +114,7 @@ export function mapCountLine(row: {
     itemName: item?.name ?? null,
     itemSku: item?.sku ?? null,
     variantName: asSingle(row.item_variants)?.name ?? null,
+    lotNumber: asSingle(row.inventory_lots)?.lot_number ?? null,
     locationName: asSingle(row.locations)?.name ?? null,
     storageAreaName: asSingle(row.storage_areas)?.name ?? null,
     binName: asSingle(row.storage_bins)?.name ?? null,

@@ -84,11 +84,11 @@ export async function listCountLines(sessionId: string): Promise<CountLine[]> {
   const { data, error } = await supabase
     .from("count_lines")
     .select(
-      `id, organization_id, count_session_id, item_id, variant_id, location_id, storage_area_id, bin_id,
+      `id, organization_id, count_session_id, item_id, variant_id, lot_id, location_id, storage_area_id, bin_id,
       expected_quantity, counted_quantity, variance, status, notes, counted_by, counted_at,
       reviewed_by, reviewed_at, reconciliation_transaction_id, created_at, updated_at,
       items(name, sku, units_of_measure!items_base_unit_id_fkey(symbol)),
-      item_variants(name), locations(name), storage_areas(name), storage_bins(name)`,
+      item_variants(name), inventory_lots(lot_number), locations(name), storage_areas(name), storage_bins(name)`,
     )
     .eq("organization_id", context.organizationId)
     .eq("count_session_id", sessionId)

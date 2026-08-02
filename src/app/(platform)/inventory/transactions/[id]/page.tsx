@@ -19,6 +19,7 @@ import {
   isReversibleTransaction,
   permissionForTransactionType,
 } from "@/modules/inventory/types";
+import { listLots } from "@/modules/lots/queries";
 
 export const metadata: Metadata = {
   title: "Transaction detail",
@@ -51,7 +52,8 @@ export default async function TransactionDetailPage({
     throw error;
   }
 
-  const [{ locations, areas, bins }, lines, items, variants, units, linkedOriginalNumber, linkedReversalNumber] =
+  const canReadLots = can(tenant, "inventory.lots.read");
+  const [{ locations, areas, bins }, lines, items, variants, units, linkedOriginalNumber, linkedReversalNumber, lots] =
     await Promise.all([
       loadAccessibleStorageContext(tenant),
       listTransactionLines(id),
@@ -60,6 +62,7 @@ export default async function TransactionDetailPage({
       listUnits({ status: "active" }),
       getLinkedTransactionNumber(transaction.reversesTransactionId),
       getLinkedTransactionNumber(transaction.reversedByTransactionId),
+      canReadLots ? listLots() : Promise.resolve([]),
     ]);
 
   const managePermission = permissionForTransactionType(transaction.transactionType);
@@ -88,7 +91,9 @@ export default async function TransactionDetailPage({
         locations={locations}
         areas={areas}
         bins={bins}
+        lots={lots}
         canManage={canManage}
+        canManageLots={can(tenant, "inventory.lots.manage")}
         canReverse={can(tenant, "inventory.reverse") && isReversibleTransaction(transaction)}
         linkedOriginalNumber={linkedOriginalNumber}
         linkedReversalNumber={linkedReversalNumber}
