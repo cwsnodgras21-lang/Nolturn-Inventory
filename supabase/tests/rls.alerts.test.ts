@@ -269,26 +269,29 @@ describe.skipIf(!enabled)("Phase 3.6 operational alerts", () => {
       .select("id")
       .single();
 
-    await admin.from("inventory_balances").insert([
-      {
-        organization_id: orgA,
-        item_id: lotItem!.id,
-        lot_id: expiredLot!.id,
-        location_id: primaryA,
-        storage_area_id: fridgeArea,
-        bin_id: fridgeBin,
-        quantity_on_hand: 3,
-      },
-      {
-        organization_id: orgA,
-        item_id: lotItem!.id,
-        lot_id: quarantinedLot!.id,
-        location_id: primaryA,
-        storage_area_id: fridgeArea,
-        bin_id: fridgeBin,
-        quantity_on_hand: 2,
-      },
-    ]);
+    const { data: insertedBalances } = await admin
+      .from("inventory_balances")
+      .insert([
+        {
+          organization_id: orgA,
+          item_id: lotItem!.id,
+          lot_id: expiredLot!.id,
+          location_id: primaryA,
+          storage_area_id: fridgeArea,
+          bin_id: fridgeBin,
+          quantity_on_hand: 3,
+        },
+        {
+          organization_id: orgA,
+          item_id: lotItem!.id,
+          lot_id: quarantinedLot!.id,
+          location_id: primaryA,
+          storage_area_id: fridgeArea,
+          bin_id: fridgeBin,
+          quantity_on_hand: 2,
+        },
+      ])
+      .select("id");
 
     const sync = await client.rpc("sync_operational_alerts", { p_organization_id: orgA });
     expect(sync.error).toBeNull();
@@ -312,6 +315,17 @@ describe.skipIf(!enabled)("Phase 3.6 operational alerts", () => {
       .eq("status", "open")
       .maybeSingle();
     expect(quarantineAlert?.entity_id).toBe(quarantinedLot!.id);
+
+    // Remove synthetic balances so inventory reconcile suites stay green.
+    if (insertedBalances?.length) {
+      await admin
+        .from("inventory_balances")
+        .delete()
+        .in(
+          "id",
+          insertedBalances.map((row) => row.id),
+        );
+    }
   });
 
   it("creates active recall alerts", async () => {
@@ -401,25 +415,37 @@ describe.skipIf(!enabled)("Phase 3.6 operational alerts", () => {
       .maybeSingle();
 
     if (alert) {
-      const { error: ackDenied } = await readonly
+      const { data: deniedRows } = await readonly
         .from("operational_alerts")
         .update({
           status: "acknowledged",
           acknowledged_by: (await signIn("readonly@nolt.local")).userId,
           acknowledged_at: new Date().toISOString(),
         })
-        .eq("id", alert.id);
-      expect(ackDenied).toBeTruthy();
+        .eq("id", alert.id)
+        .select("id");
+      // RLS filters unauthorized updates to zero rows rather than always raising.
+      expect(deniedRows?.length ?? 0).toBe(0);
 
-      const { error: ackOk } = await owner
+      const { data: stillOpen } = await owner
+        .from("operational_alerts")
+        .select("status")
+        .eq("id", alert.id)
+        .maybeSingle();
+      expect(stillOpen?.status).toBe("open");
+
+      const { userId: ownerId } = await signIn("owner@nolt.local");
+      const { data: ackRows, error: ackOk } = await owner
         .from("operational_alerts")
         .update({
           status: "acknowledged",
-          acknowledged_by: (await signIn("owner@nolt.local")).userId,
+          acknowledged_by: ownerId,
           acknowledged_at: new Date().toISOString(),
         })
-        .eq("id", alert.id);
+        .eq("id", alert.id)
+        .select("id");
       expect(ackOk).toBeNull();
+      expect(ackRows?.length).toBe(1);
     }
   });
 
