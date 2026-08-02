@@ -1,7 +1,7 @@
 # Architecture
 
 **Last reviewed:** 2026-08-02  
-**Phase:** 2.4 — Inventory ledger foundation
+**Phase:** 2.5 — Core inventory movements
 
 ## Intent
 
@@ -15,9 +15,9 @@ Tenant-owned catalog under `src/modules/catalog/`. Item conversions resolve dire
 
 Physical hierarchy under `src/modules/storage/`, location-scoped via `requireLocationAccess` / `user_can_access_location`.
 
-## Inventory ledger (Phase 2.4)
+## Inventory ledger & movements (Phases 2.4–2.5)
 
-Domain under `src/modules/inventory/`. Quantities come from immutable `inventory_ledger_entries`. Balances are projections. Completion is an atomic security-definer RPC. Details: [INVENTORY_LEDGER.md](./INVENTORY_LEDGER.md).
+Domain under `src/modules/inventory/`. Quantities come from immutable `inventory_ledger_entries`. Balances are projections. Completion is an atomic security-definer RPC that branches by transaction type for permission, source/destination sides, negative-stock checks, and transfer dual posting. Details: [INVENTORY_LEDGER.md](./INVENTORY_LEDGER.md).
 
 ## Assumptions
 
@@ -29,6 +29,7 @@ Domain under `src/modules/inventory/`. Quantities come from immutable `inventory
 6. Active organization cookie is a candidate only — membership is revalidated every request.
 7. Location-scoped inventory data must not leak across restricted locations.
 8. Ledger is source of truth; never silent-edit completed stock movements (ADR-0004).
+9. Debits enforce `allow_negative_stock` at exact balance dimensions under row locks.
 
 ## Request path
 
@@ -48,4 +49,4 @@ Browser → proxy.ts (session refresh)
 - [TENANCY_MODEL.md](./TENANCY_MODEL.md)
 - [CATALOG_MODEL.md](./CATALOG_MODEL.md)
 - [DATA_DICTIONARY.md](./DATA_DICTIONARY.md)
-- [PHASE2_4_INSPECTION.md](./PHASE2_4_INSPECTION.md)
+- [PHASE2_5_INSPECTION.md](./PHASE2_5_INSPECTION.md)

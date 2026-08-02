@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
@@ -199,26 +199,28 @@ export function TransactionWorkspace({
     () => areas.filter((area) => area.locationId === sourceLocationId),
     [areas, sourceLocationId],
   );
+  const effectiveSourceAreaId = sourceAreas.some((area) => area.id === sourceAreaId)
+    ? sourceAreaId
+    : (sourceAreas[0]?.id ?? "");
   const sourceBins = useMemo(
-    () => bins.filter((bin) => bin.storageAreaId === sourceAreaId),
-    [bins, sourceAreaId],
+    () => bins.filter((bin) => bin.storageAreaId === effectiveSourceAreaId),
+    [bins, effectiveSourceAreaId],
   );
   const destAreas = useMemo(
     () => areas.filter((area) => area.locationId === destLocationId),
     [areas, destLocationId],
   );
+  const effectiveDestAreaId = destAreas.some((area) => area.id === destAreaId)
+    ? destAreaId
+    : (destAreas[0]?.id ?? "");
   const destBins = useMemo(
-    () => bins.filter((bin) => bin.storageAreaId === destAreaId),
-    [bins, destAreaId],
+    () => bins.filter((bin) => bin.storageAreaId === effectiveDestAreaId),
+    [bins, effectiveDestAreaId],
   );
-
-  useEffect(() => {
-    if (!sourceAreaId && sourceAreas[0]) setSourceAreaId(sourceAreas[0].id);
-  }, [sourceAreas, sourceAreaId]);
-
-  useEffect(() => {
-    if (!destAreaId && destAreas[0]) setDestAreaId(destAreas[0].id);
-  }, [destAreas, destAreaId]);
+  const effectiveSourceBinId = sourceBins.some((bin) => bin.id === sourceBinId)
+    ? sourceBinId
+    : "";
+  const effectiveDestBinId = destBins.some((bin) => bin.id === destBinId) ? destBinId : "";
 
   function refresh() {
     startTransition(() => router.refresh());
@@ -331,11 +333,11 @@ export function TransactionWorkspace({
                   enteredQuantity: Number(enteredQuantity),
                   enteredUnitId,
                   sourceLocationId: showSource ? sourceLocationId : null,
-                  sourceStorageAreaId: showSource ? sourceAreaId : null,
-                  sourceBinId: showSource && sourceBinId ? sourceBinId : null,
+                  sourceStorageAreaId: showSource ? effectiveSourceAreaId : null,
+                  sourceBinId: showSource && effectiveSourceBinId ? effectiveSourceBinId : null,
                   destinationLocationId: showDest ? destLocationId : null,
-                  destinationStorageAreaId: showDest ? destAreaId : null,
-                  destinationBinId: showDest && destBinId ? destBinId : null,
+                  destinationStorageAreaId: showDest ? effectiveDestAreaId : null,
+                  destinationBinId: showDest && effectiveDestBinId ? effectiveDestBinId : null,
                   unitCost: unitCost ? Number(unitCost) : null,
                   notes: lineNotes.trim() ? lineNotes : null,
                 });
@@ -440,14 +442,14 @@ export function TransactionWorkspace({
                   <span className="text-muted">From area</span>
                   <select
                     required
-                    value={sourceAreaId}
+                    value={effectiveSourceAreaId}
                     onChange={(e) => {
                       setSourceAreaId(e.target.value);
                       setSourceBinId("");
                     }}
                     className="w-full rounded-md border border-border bg-background px-3 py-2"
                   >
-                    <option value="">Select area</option>
+                    {sourceAreas.length === 0 ? <option value="">Select area</option> : null}
                     {sourceAreas.map((area) => (
                       <option key={area.id} value={area.id}>
                         {area.name}
@@ -458,7 +460,7 @@ export function TransactionWorkspace({
                 <label className="space-y-1 text-sm">
                   <span className="text-muted">From bin</span>
                   <select
-                    value={sourceBinId}
+                    value={effectiveSourceBinId}
                     onChange={(e) => setSourceBinId(e.target.value)}
                     className="w-full rounded-md border border-border bg-background px-3 py-2"
                   >
@@ -498,14 +500,14 @@ export function TransactionWorkspace({
                   <span className="text-muted">To area</span>
                   <select
                     required
-                    value={destAreaId}
+                    value={effectiveDestAreaId}
                     onChange={(e) => {
                       setDestAreaId(e.target.value);
                       setDestBinId("");
                     }}
                     className="w-full rounded-md border border-border bg-background px-3 py-2"
                   >
-                    <option value="">Select area</option>
+                    {destAreas.length === 0 ? <option value="">Select area</option> : null}
                     {destAreas.map((area) => (
                       <option key={area.id} value={area.id}>
                         {area.name}
@@ -516,7 +518,7 @@ export function TransactionWorkspace({
                 <label className="space-y-1 text-sm">
                   <span className="text-muted">To bin</span>
                   <select
-                    value={destBinId}
+                    value={effectiveDestBinId}
                     onChange={(e) => setDestBinId(e.target.value)}
                     className="w-full rounded-md border border-border bg-background px-3 py-2"
                   >
@@ -557,8 +559,8 @@ export function TransactionWorkspace({
               type="submit"
               disabled={
                 pending ||
-                (showSource && !sourceAreaId) ||
-                (showDest && !destAreaId)
+                (showSource && !effectiveSourceAreaId) ||
+                (showDest && !effectiveDestAreaId)
               }
             >
               Add line

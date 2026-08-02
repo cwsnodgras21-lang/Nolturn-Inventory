@@ -1,7 +1,7 @@
 # Security model
 
 **Last reviewed:** 2026-08-02  
-**Status:** Phase 2.4 enforced
+**Status:** Phase 2.5 enforced
 
 ## Authentication
 
@@ -21,7 +21,7 @@
 | --- | --- |
 | Catalog | `catalog.read` / `catalog.manage` |
 | Storage | `inventory.storage.read` / `inventory.storage.manage` + location access |
-| Inventory | `inventory.read` / `inventory.adjust` + location access on destinations |
+| Inventory | `inventory.read` / `inventory.adjust` / `inventory.receive` / `inventory.consume` / `inventory.transfer` + location access on source/destination sides |
 
 ## Tenant resolution
 
@@ -37,7 +37,7 @@
 - `user_has_permission(organization_id, permission_key)`
 - `user_can_access_location(location_id)`
 
-Completion RPC `complete_inventory_transaction` is security definer and re-checks permission + location access inside the database transaction.
+Completion RPC `complete_inventory_transaction` is security definer and re-checks type-specific permission + source/destination location access inside the database transaction. Draft line insert RLS allows any movement permission; unauthorized locations are blocked at app command and completion time (not on line insert).
 
 ## Service-role usage
 
@@ -50,7 +50,7 @@ Never imported by Client Components (`import "server-only"`).
 
 ## Audit
 
-Append-only `audit_events`. Inventory events include `inventory.transaction.*` and line add/remove.
+Append-only `audit_events`. Inventory events include `inventory.transaction.*`, line add/remove, and type-specific completion keys (`inventory.receipt.completed`, `inventory.consumption.completed`, `inventory.transfer.completed`, `inventory.negative_adjustment.completed`).
 
 ## Threat mitigations
 
@@ -59,7 +59,9 @@ Append-only `audit_events`. Inventory events include `inventory.transaction.*` a
 | Cross-tenant access | RLS + membership checks |
 | Client-supplied org/location IDs | Revalidated every request + location helper |
 | Duplicate stock posts | Header row lock + completed-status guard |
+| Concurrent overspend | Balance row `FOR UPDATE` before debit |
 | Tampered base quantities | Server recalculation on complete |
 | Direct balance edits | No tenant write policies; ledger immutable |
-| Restricted location escape | Line/ledger/balance location-scoped RLS |
+| Restricted location escape | Completion + app command location checks; ledger/balance location-scoped RLS |
+| Negative stock bypass | Exact-dimension stock assert unless `allow_negative_stock` |
 | Service-role leakage | `server-only` + env discipline + tests |

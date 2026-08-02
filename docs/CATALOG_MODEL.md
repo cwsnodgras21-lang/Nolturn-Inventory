@@ -62,8 +62,8 @@ Catalog masters only — **no quantity columns**.
 - SKU unique per organization (case-insensitive via `sku_normalized`)
 - Soft status (`active` | `inactive`); no hard delete via tenant workflows
 - `organization_id` immutable
-- `allow_negative_stock` is reserved for future inventory policy
-- If `requires_variant` is true, future inventory transactions must require a variant
+- `allow_negative_stock` is enforced on inventory debits (consumption, negative adjustment, transfer source) at exact balance dimensions
+- If `requires_variant` is true, inventory transaction lines must include a variant
 
 ### Base unit future lock
 
@@ -153,4 +153,4 @@ Uses `private.user_has_permission(organization_id, 'catalog.read'|'catalog.manag
 
 ## Out of scope (2.2)
 
-Storage areas, inventory quantities/transactions/balances, receiving, consumption, transfers, adjustments, lots, expiration, procurement, Stripe, PandaDoc, Nolt, industry modules.
+Lots, expiration, counts, procurement, Stripe, PandaDoc, Nolt, industry modules. Inventory ledger and core movements are documented in [INVENTORY_LEDGER.md](./INVENTORY_LEDGER.md).

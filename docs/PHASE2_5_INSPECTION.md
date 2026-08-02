@@ -55,3 +55,12 @@ Yes. Opening balance / positive adjustment, atomic `complete_inventory_transacti
 ## Completion notes
 
 Phase 2.5 adds receipts, consumption, negative adjustments, and transfers with negative-stock enforcement. Reversals remain out of scope.
+
+## Verification checklist (finish)
+
+- [x] Fix Phase 2.4 restricted-location test assumption (location access on complete, not line insert)
+- [x] Extended RLS/ledger tests for movement types, transfer totals, negative stock, concurrency, dimensions, audit
+- [x] Docs updated to Phase 2.5
+- [x] `npm run verify` (typecheck, lint, unit tests, build)
+- [x] `npm run test:e2e`
+- Local Supabase + `npm run db:bootstrap` + `npm run test:rls` needs host Docker with healthy container networking (cloud DinD could not keep Kong upstreams healthy)

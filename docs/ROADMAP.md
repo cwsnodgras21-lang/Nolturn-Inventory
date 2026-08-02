@@ -60,12 +60,17 @@ Unimplemented work only. Implemented behavior belongs in PRODUCT_CONTEXT.md.
 - [x] `inventory.read` / `inventory.adjust` + location-scoped RLS
 - [x] Minimal stock/transaction UI + ledger tests/docs
 
+## Phase 2.5 — Core inventory movements
+
+- [x] Receipt / consumption / negative adjustment / transfer types
+- [x] Source + destination line dimensions; transfer dual ledger posting
+- [x] Negative-stock enforcement at exact balance dimensions
+- [x] `inventory.receive` / `inventory.consume` / `inventory.transfer` + role mappings
+- [x] Movement UI workspaces + stock/history filters
+- [x] Extended RLS/ledger tests + docs
+
 ## Phase 2 (remaining) — Inventory operations
 
-- Receiving / receipts
-- Consumption
-- Negative adjustments
-- Transfers
 - Reversals
 - Inventory history polish
 

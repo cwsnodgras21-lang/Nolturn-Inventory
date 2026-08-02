@@ -1,7 +1,7 @@
 # Data dictionary
 
 **Last reviewed:** 2026-08-02  
-**Status:** Phase 2.4 schema applied
+**Status:** Phase 2.5 schema applied
 
 ## Implemented tables
 
@@ -19,29 +19,29 @@
 | audit_events | Append-only application audit |
 | units_of_measure | Tenant units |
 | item_categories | Hierarchical categories |
-| items | Catalog masters; no quantity |
+| items | Catalog masters; no quantity; `allow_negative_stock` enforced on debit |
 | item_variants | Optional variants |
 | item_unit_conversions | Direct-to-base conversions |
 | item_identifiers | Org-unique normalized identifiers |
 | storage_areas | Nested areas within a location |
 | storage_bins | Optional bins within an area |
 | inventory_transaction_counters | Per-org transaction number sequence |
-| inventory_transactions | Draft/completed/cancelled headers |
-| inventory_transaction_lines | Entered quantities and destinations |
-| inventory_ledger_entries | Immutable signed quantity effects |
+| inventory_transactions | Draft/completed/cancelled headers; types include receipt/consumption/transfer/±adjustment/opening_balance; optional `reference_text` |
+| inventory_transaction_lines | Entered quantities with nullable source and/or destination storage |
+| inventory_ledger_entries | Immutable signed quantity effects; `effect_role` (`primary` \| `source` \| `destination`) |
 | inventory_balances | Rebuildable on-hand projection |
 
 ## Permission keys
 
-See `src/lib/permissions/catalog.ts`.
+See `src/lib/permissions/catalog.ts`. Movement keys: `inventory.read`, `inventory.adjust`, `inventory.receive`, `inventory.consume`, `inventory.transfer`.
 
 ## RPCs
 
 | Function | Purpose |
 | --- | --- |
-| `complete_inventory_transaction(uuid)` | Atomically post draft → ledger + balances |
+| `complete_inventory_transaction(uuid)` | Atomically post draft → ledger + balances (type-aware) |
 | `rebuild_inventory_balances(uuid)` | Recompute balances from ledger for an org |
 
 ## Planned (not created)
 
-Receipt/consumption/transfer/reversal types, lots, expiration, counts, procurement, modules, billing, Nolt execution tables.
+Reversal types, lots, expiration, counts, procurement, modules, billing, Nolt execution tables.

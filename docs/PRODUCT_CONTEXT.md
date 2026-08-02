@@ -1,13 +1,13 @@
 # Product context
 
 **Last reviewed:** 2026-08-02  
-**Phase:** 2.4 — Inventory ledger foundation
+**Phase:** 2.5 — Core inventory movements
 
 This document describes functionality that **exists today**. Planned work lives in [ROADMAP.md](./ROADMAP.md).
 
 ## Product purpose
 
-Nolt Inventory is a multi-tenant inventory operations platform. Phase 2.4 establishes the immutable inventory ledger with opening balances and positive adjustments on top of catalog and storage.
+Nolt Inventory is a multi-tenant inventory operations platform. Phase 2.5 adds receipts, consumption, negative adjustments, and transfers on top of the immutable ledger foundation.
 
 ## Tech stack
 
@@ -27,21 +27,22 @@ Units, categories, items, variants, conversions, identifiers.
 
 Location-scoped storage areas and optional bins.
 
-### Inventory ledger (Phase 2.4)
+### Inventory ledger & movements (Phases 2.4–2.5)
 
-- Transaction headers/lines for `opening_balance` and `positive_adjustment`
-- Immutable ledger entries + rebuildable balances
-- Permissions `inventory.read` / `inventory.adjust`
-- UI: current stock, transaction history, create/complete draft adjustments
+- Transaction headers/lines for `opening_balance`, `positive_adjustment`, `negative_adjustment`, `receipt`, `consumption`, `transfer`
+- Immutable ledger entries (`effect_role` for transfer source/destination) + rebuildable balances
+- Negative-stock enforcement at exact storage dimensions
+- Permissions `inventory.read` / `inventory.adjust` / `inventory.receive` / `inventory.consume` / `inventory.transfer`
+- UI: current stock, transaction history/filters, receive / consume / transfer / adjust workspaces
 - See [INVENTORY_LEDGER.md](./INVENTORY_LEDGER.md)
 
 ## Not implemented
 
-Receipts, consumption, negative adjustments, transfers, reversals, lots, expiration, counts, procurement, modules, Stripe, PandaDoc, Nolt.
+Reversals, lots, expiration, counts, procurement, modules, Stripe, PandaDoc, Nolt.
 
 ## Navigation
 
-Inventory is available with `inventory.read`. Administration still hosts catalog and storage. Purchasing / Nolt remain planned placeholders.
+Inventory is available with `inventory.read`. Movement routes require their type-specific permissions. Administration still hosts catalog and storage. Purchasing / Nolt remain planned placeholders.
 
 ## Local setup
 
@@ -49,6 +50,7 @@ Inventory is available with `inventory.read`. Administration still hosts catalog
 cp .env.example .env.local
 npm install
 npm run supabase:start
+# copy keys from `npx supabase status -o env` into .env.local
 npm run db:reset
 npm run db:bootstrap
 npm run dev
@@ -68,6 +70,6 @@ npm run test:e2e
 
 ## Code map
 
-- `src/modules/inventory/` — ledger domain + UI
+- `src/modules/inventory/` — ledger domain + movement UI
 - `src/modules/catalog/`, `src/modules/storage/`
-- `docs/INVENTORY_LEDGER.md`, `docs/PHASE2_4_INSPECTION.md`
+- `docs/INVENTORY_LEDGER.md`, `docs/PHASE2_5_INSPECTION.md`

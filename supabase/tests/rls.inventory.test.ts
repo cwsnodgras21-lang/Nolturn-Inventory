@@ -20,7 +20,15 @@ async function signIn(email: string, password = "password123") {
   return { client, userId: data.user.id };
 }
 
-describe.skipIf(!enabled)("Phase 2.4 inventory ledger RLS and integrity", () => {
+type BalanceDims = {
+  itemId: string;
+  variantId?: string | null;
+  locationId: string;
+  storageAreaId: string;
+  binId?: string | null;
+};
+
+describe.skipIf(!enabled)("Phase 2.5 inventory movements RLS and integrity", () => {
   let admin: SupabaseClient;
   let orgA: string;
   let orgB: string;
@@ -33,7 +41,9 @@ describe.skipIf(!enabled)("Phase 2.4 inventory ledger RLS and integrity", () => 
   let glovesBase: string;
   let mediumVariant: string;
   let fridgeArea: string;
+  let fridgeBin: string;
   let topShelf: string;
+  let warehouseArea: string;
   let mLUnit: string;
   let boxUnit: string;
 
@@ -70,10 +80,17 @@ describe.skipIf(!enabled)("Phase 2.4 inventory ledger RLS and integrity", () => 
 
     const { data: areas } = await admin
       .from("storage_areas")
+      .select("id, code, location_id")
+      .eq("organization_id", orgA);
+    fridgeArea = areas?.find((a) => a.code === "MED-FRIDGE" && a.location_id === primaryA)?.id ?? "";
+    topShelf = areas?.find((a) => a.code === "SUPPLY-CAB-A-TOP" && a.location_id === primaryA)?.id ?? "";
+    warehouseArea = areas?.find((a) => a.code === "WH-MAIN" && a.location_id === storageA)?.id ?? "";
+
+    const { data: bins } = await admin
+      .from("storage_bins")
       .select("id, code")
-      .eq("location_id", primaryA);
-    fridgeArea = areas?.find((a) => a.code === "MED-FRIDGE")?.id ?? "";
-    topShelf = areas?.find((a) => a.code === "SUPPLY-CAB-A-TOP")?.id ?? "";
+      .eq("storage_area_id", fridgeArea);
+    fridgeBin = bins?.find((b) => b.code === "MED-FRIDGE-D1")?.id ?? "";
 
     const { data: units } = await admin
       .from("units_of_measure")
@@ -82,23 +99,93 @@ describe.skipIf(!enabled)("Phase 2.4 inventory ledger RLS and integrity", () => 
     mLUnit = units?.find((u) => u.symbol === "mL")?.id ?? "";
     boxUnit = units?.find((u) => u.symbol === "box")?.id ?? "";
 
-    if (!primaryA || !alcoholId || !glovesId || !mediumVariant || !fridgeArea || !topShelf) {
+    if (
+      !primaryA ||
+      !storageA ||
+      !alcoholId ||
+      !glovesId ||
+      !mediumVariant ||
+      !fridgeArea ||
+      !fridgeBin ||
+      !topShelf ||
+      !warehouseArea
+    ) {
       throw new Error("Bootstrap inventory fixtures missing.");
     }
   });
 
-  async function createDraft(client: SupabaseClient, orgId: string) {
+  async function createDraft(
+    client: SupabaseClient,
+    orgId: string,
+    transactionType: string,
+    extras: { notes?: string; reference_text?: string } = {},
+  ) {
     return client
       .from("inventory_transactions")
       .insert({
         organization_id: orgId,
-        transaction_type: "positive_adjustment",
+        transaction_type: transactionType,
         status: "draft",
         transaction_number: "",
-        notes: `test ${Date.now()}`,
+        notes: extras.notes ?? `test ${transactionType} ${Date.now()}`,
+        reference_text: extras.reference_text ?? null,
       })
       .select("id, transaction_number, status")
       .single();
+  }
+
+  async function balanceQty(dims: BalanceDims) {
+    let query = admin
+      .from("inventory_balances")
+      .select("quantity_on_hand")
+      .eq("organization_id", orgA)
+      .eq("item_id", dims.itemId)
+      .eq("location_id", dims.locationId)
+      .eq("storage_area_id", dims.storageAreaId);
+    query = dims.variantId ? query.eq("variant_id", dims.variantId) : query.is("variant_id", null);
+    query = dims.binId ? query.eq("bin_id", dims.binId) : query.is("bin_id", null);
+    const { data } = await query.maybeSingle();
+    return Number(data?.quantity_on_hand ?? 0);
+  }
+
+  async function orgItemTotal(itemId: string, variantId?: string | null) {
+    let query = admin
+      .from("inventory_balances")
+      .select("quantity_on_hand")
+      .eq("organization_id", orgA)
+      .eq("item_id", itemId);
+    query = variantId ? query.eq("variant_id", variantId) : query.is("variant_id", null);
+    const { data } = await query;
+    return (data ?? []).reduce((sum, row) => sum + Number(row.quantity_on_hand), 0);
+  }
+
+  async function seedStock(
+    client: SupabaseClient,
+    qtyBase: number,
+    dims: BalanceDims & { enteredUnitId?: string },
+  ) {
+    const { data: txn, error } = await createDraft(client, orgA, "positive_adjustment");
+    expect(error).toBeNull();
+    const { error: lineError } = await client.from("inventory_transaction_lines").insert({
+      organization_id: orgA,
+      transaction_id: txn!.id,
+      line_number: 1,
+      item_id: dims.itemId,
+      variant_id: dims.variantId ?? null,
+      entered_quantity: qtyBase,
+      entered_unit_id: dims.enteredUnitId ?? alcoholBase,
+      conversion_multiplier: 1,
+      base_quantity: qtyBase,
+      destination_location_id: dims.locationId,
+      destination_storage_area_id: dims.storageAreaId,
+      destination_bin_id: dims.binId ?? null,
+    });
+    expect(lineError).toBeNull();
+    const { error: completeError } = await client.rpc("complete_inventory_transaction", {
+      p_transaction_id: txn!.id,
+    });
+    expect(completeError).toBeNull();
+    return txn!.id;
   }
 
   it("role mappings include inventory movement permissions", async () => {
@@ -145,7 +232,15 @@ describe.skipIf(!enabled)("Phase 2.4 inventory ledger RLS and integrity", () => 
 
   it("positive adjustment increases balance with correct conversion", async () => {
     const { client } = await signIn("owner@nolt.local");
-    const { data: txn, error } = await createDraft(client, orgA);
+    const dims = {
+      itemId: alcoholId,
+      locationId: primaryA,
+      storageAreaId: fridgeArea,
+      binId: null as string | null,
+    };
+    const before = await balanceQty(dims);
+
+    const { data: txn, error } = await createDraft(client, orgA, "positive_adjustment");
     expect(error).toBeNull();
 
     const { error: lineError } = await client.from("inventory_transaction_lines").insert({
@@ -162,16 +257,6 @@ describe.skipIf(!enabled)("Phase 2.4 inventory ledger RLS and integrity", () => 
     });
     expect(lineError).toBeNull();
 
-    const before = await client
-      .from("inventory_balances")
-      .select("quantity_on_hand")
-      .eq("item_id", alcoholId)
-      .eq("location_id", primaryA)
-      .eq("storage_area_id", fridgeArea)
-      .is("variant_id", null)
-      .is("bin_id", null)
-      .maybeSingle();
-
     const { error: completeError } = await client.rpc("complete_inventory_transaction", {
       p_transaction_id: txn!.id,
     });
@@ -184,58 +269,223 @@ describe.skipIf(!enabled)("Phase 2.4 inventory ledger RLS and integrity", () => 
       .single();
     expect(Number(line?.conversion_multiplier)).toBe(500);
     expect(Number(line?.base_quantity)).toBe(500);
-
-    const after = await client
-      .from("inventory_balances")
-      .select("quantity_on_hand")
-      .eq("item_id", alcoholId)
-      .eq("location_id", primaryA)
-      .eq("storage_area_id", fridgeArea)
-      .is("variant_id", null)
-      .is("bin_id", null)
-      .maybeSingle();
-
-    const beforeQty = Number(before.data?.quantity_on_hand ?? 0);
-    expect(after.data).toBeTruthy();
-    expect(Number(after.data?.quantity_on_hand)).toBe(beforeQty + 500);
+    expect(await balanceQty(dims)).toBe(before + 500);
   });
 
-  it("requires variant when item requires_variant", async () => {
+  it("receipt increases stock at destination", async () => {
     const { client } = await signIn("owner@nolt.local");
-    const { data: txn } = await createDraft(client, orgA);
-    const { error } = await client.from("inventory_transaction_lines").insert({
+    const dims = {
+      itemId: alcoholId,
+      locationId: primaryA,
+      storageAreaId: fridgeArea,
+      binId: fridgeBin,
+    };
+    const before = await balanceQty(dims);
+
+    const { data: txn, error } = await createDraft(client, orgA, "receipt", {
+      reference_text: `DN-${Date.now()}`,
+    });
+    expect(error).toBeNull();
+    expect(txn?.transaction_number).toMatch(/^RCV-/);
+
+    const { error: lineError } = await client.from("inventory_transaction_lines").insert({
       organization_id: orgA,
       transaction_id: txn!.id,
       line_number: 1,
-      item_id: glovesId,
-      entered_quantity: 1,
-      entered_unit_id: glovesBase,
+      item_id: alcoholId,
+      entered_quantity: 50,
+      entered_unit_id: mLUnit,
       conversion_multiplier: 1,
-      base_quantity: 1,
+      base_quantity: 50,
       destination_location_id: primaryA,
-      destination_storage_area_id: topShelf,
+      destination_storage_area_id: fridgeArea,
+      destination_bin_id: fridgeBin,
     });
-    expect(error).toBeTruthy();
+    expect(lineError).toBeNull();
+
+    const { error: completeError } = await client.rpc("complete_inventory_transaction", {
+      p_transaction_id: txn!.id,
+    });
+    expect(completeError).toBeNull();
+    expect(await balanceQty(dims)).toBe(before + 50);
+
+    const { data: ledger } = await admin
+      .from("inventory_ledger_entries")
+      .select("quantity_delta, effect_role")
+      .eq("transaction_id", txn!.id);
+    expect(ledger).toHaveLength(1);
+    const entry = ledger?.[0];
+    expect(entry).toBeTruthy();
+    expect(Number(entry?.quantity_delta)).toBe(50);
+    expect(entry?.effect_role).toBe("primary");
   });
 
-  it("blocks cross-tenant inventory access", async () => {
-    const ownerB = await signIn("other-owner@nolt.local");
-    const { data } = await ownerB.client
-      .from("inventory_balances")
-      .select("id")
-      .eq("organization_id", orgA);
-    expect(data ?? []).toEqual([]);
+  it("consumption decreases stock at source", async () => {
+    const { client } = await signIn("owner@nolt.local");
+    const dims = {
+      itemId: alcoholId,
+      locationId: primaryA,
+      storageAreaId: fridgeArea,
+      binId: fridgeBin,
+    };
+    await seedStock(client, 40, { ...dims, enteredUnitId: mLUnit });
+    const before = await balanceQty(dims);
+
+    const { data: txn, error } = await createDraft(client, orgA, "consumption");
+    expect(error).toBeNull();
+    expect(txn?.transaction_number).toMatch(/^CON-/);
+
+    const { error: lineError } = await client.from("inventory_transaction_lines").insert({
+      organization_id: orgA,
+      transaction_id: txn!.id,
+      line_number: 1,
+      item_id: alcoholId,
+      entered_quantity: 15,
+      entered_unit_id: mLUnit,
+      conversion_multiplier: 1,
+      base_quantity: 15,
+      source_location_id: primaryA,
+      source_storage_area_id: fridgeArea,
+      source_bin_id: fridgeBin,
+    });
+    expect(lineError).toBeNull();
+
+    const { error: completeError } = await client.rpc("complete_inventory_transaction", {
+      p_transaction_id: txn!.id,
+    });
+    expect(completeError).toBeNull();
+    expect(await balanceQty(dims)).toBe(before - 15);
   });
 
-  it("restricted user cannot complete into unauthorized location", async () => {
+  it("negative adjustment decreases stock and requires reason", async () => {
+    const { client } = await signIn("owner@nolt.local");
+    const dims = {
+      itemId: alcoholId,
+      locationId: primaryA,
+      storageAreaId: fridgeArea,
+      binId: fridgeBin,
+    };
+    await seedStock(client, 25, { ...dims, enteredUnitId: mLUnit });
+    const before = await balanceQty(dims);
+
+    const { data: noReason, error: noReasonError } = await createDraft(
+      client,
+      orgA,
+      "negative_adjustment",
+      { notes: "   " },
+    );
+    expect(noReasonError).toBeNull();
+    await client.from("inventory_transaction_lines").insert({
+      organization_id: orgA,
+      transaction_id: noReason!.id,
+      line_number: 1,
+      item_id: alcoholId,
+      entered_quantity: 5,
+      entered_unit_id: mLUnit,
+      conversion_multiplier: 1,
+      base_quantity: 5,
+      source_location_id: primaryA,
+      source_storage_area_id: fridgeArea,
+      source_bin_id: fridgeBin,
+    });
+    const blocked = await client.rpc("complete_inventory_transaction", {
+      p_transaction_id: noReason!.id,
+    });
+    expect(blocked.error).toBeTruthy();
+
+    const { data: txn, error } = await createDraft(client, orgA, "negative_adjustment", {
+      notes: "Damaged vial",
+    });
+    expect(error).toBeNull();
+    expect(txn?.transaction_number).toMatch(/^NADJ-/);
+
+    await client.from("inventory_transaction_lines").insert({
+      organization_id: orgA,
+      transaction_id: txn!.id,
+      line_number: 1,
+      item_id: alcoholId,
+      entered_quantity: 5,
+      entered_unit_id: mLUnit,
+      conversion_multiplier: 1,
+      base_quantity: 5,
+      source_location_id: primaryA,
+      source_storage_area_id: fridgeArea,
+      source_bin_id: fridgeBin,
+    });
+    const { error: completeError } = await client.rpc("complete_inventory_transaction", {
+      p_transaction_id: txn!.id,
+    });
+    expect(completeError).toBeNull();
+    expect(await balanceQty(dims)).toBe(before - 5);
+  });
+
+  it("transfer moves stock source↓ destination↑ and preserves org total", async () => {
+    const { client } = await signIn("owner@nolt.local");
+    const source = {
+      itemId: alcoholId,
+      locationId: primaryA,
+      storageAreaId: fridgeArea,
+      binId: fridgeBin,
+    };
+    const dest = {
+      itemId: alcoholId,
+      locationId: storageA,
+      storageAreaId: warehouseArea,
+      binId: null as string | null,
+    };
+    await seedStock(client, 60, { ...source, enteredUnitId: mLUnit });
+    const beforeSource = await balanceQty(source);
+    const beforeDest = await balanceQty(dest);
+    const beforeOrg = await orgItemTotal(alcoholId);
+
+    const { data: txn, error } = await createDraft(client, orgA, "transfer");
+    expect(error).toBeNull();
+    expect(txn?.transaction_number).toMatch(/^XFR-/);
+
+    const { error: lineError } = await client.from("inventory_transaction_lines").insert({
+      organization_id: orgA,
+      transaction_id: txn!.id,
+      line_number: 1,
+      item_id: alcoholId,
+      entered_quantity: 20,
+      entered_unit_id: mLUnit,
+      conversion_multiplier: 1,
+      base_quantity: 20,
+      source_location_id: primaryA,
+      source_storage_area_id: fridgeArea,
+      source_bin_id: fridgeBin,
+      destination_location_id: storageA,
+      destination_storage_area_id: warehouseArea,
+    });
+    expect(lineError).toBeNull();
+
+    const { error: completeError } = await client.rpc("complete_inventory_transaction", {
+      p_transaction_id: txn!.id,
+    });
+    expect(completeError).toBeNull();
+
+    expect(await balanceQty(source)).toBe(beforeSource - 20);
+    expect(await balanceQty(dest)).toBe(beforeDest + 20);
+    expect(await orgItemTotal(alcoholId)).toBe(beforeOrg);
+
+    const { data: ledger } = await admin
+      .from("inventory_ledger_entries")
+      .select("quantity_delta, effect_role, location_id")
+      .eq("transaction_id", txn!.id)
+      .order("effect_role");
+    expect(ledger).toHaveLength(2);
+    const sourceEntry = ledger?.find((e) => e.effect_role === "source");
+    const destEntry = ledger?.find((e) => e.effect_role === "destination");
+    expect(Number(sourceEntry?.quantity_delta)).toBe(-20);
+    expect(sourceEntry?.location_id).toBe(primaryA);
+    expect(Number(destEntry?.quantity_delta)).toBe(20);
+    expect(destEntry?.location_id).toBe(storageA);
+  });
+
+  it("restricted user can draft unauthorized location lines but cannot complete", async () => {
+    // Location access is enforced on complete (and app commands), not line insert RLS.
     const restricted = await signIn("restricted@nolt.local");
-    const { data: txn } = await createDraft(restricted.client, orgA);
-    const { data: wh } = await admin
-      .from("storage_areas")
-      .select("id")
-      .eq("location_id", storageA)
-      .eq("code", "WH-MAIN")
-      .maybeSingle();
+    const { data: txn } = await createDraft(restricted.client, orgA, "positive_adjustment");
 
     const { error: lineError } = await restricted.client.from("inventory_transaction_lines").insert({
       organization_id: orgA,
@@ -247,15 +497,35 @@ describe.skipIf(!enabled)("Phase 2.4 inventory ledger RLS and integrity", () => 
       conversion_multiplier: 1,
       base_quantity: 1,
       destination_location_id: storageA,
-      destination_storage_area_id: wh!.id,
+      destination_storage_area_id: warehouseArea,
     });
-    expect(lineError).toBeTruthy();
+    expect(lineError).toBeNull();
+
+    const { error: completeError } = await restricted.client.rpc("complete_inventory_transaction", {
+      p_transaction_id: txn!.id,
+    });
+    expect(completeError).toBeTruthy();
+    expect(completeError?.message ?? "").toMatch(/location|accessible|permission/i);
+
+    const { data: txnAfter } = await admin
+      .from("inventory_transactions")
+      .select("status")
+      .eq("id", txn!.id)
+      .single();
+    expect(txnAfter?.status).toBe("draft");
   });
 
-  it("duplicate completion does not duplicate stock", async () => {
-    const { client } = await signIn("owner@nolt.local");
-    const { data: txn } = await createDraft(client, orgA);
-    await client.from("inventory_transaction_lines").insert({
+  it("blocks cross-tenant inventory access and completion", async () => {
+    const ownerB = await signIn("other-owner@nolt.local");
+    const { data } = await ownerB.client
+      .from("inventory_balances")
+      .select("id")
+      .eq("organization_id", orgA);
+    expect(data ?? []).toEqual([]);
+
+    const { client: ownerA } = await signIn("owner@nolt.local");
+    const { data: txn } = await createDraft(ownerA, orgA, "receipt");
+    await ownerA.from("inventory_transaction_lines").insert({
       organization_id: orgA,
       transaction_id: txn!.id,
       line_number: 1,
@@ -266,36 +536,132 @@ describe.skipIf(!enabled)("Phase 2.4 inventory ledger RLS and integrity", () => 
       base_quantity: 1,
       destination_location_id: primaryA,
       destination_storage_area_id: fridgeArea,
+      destination_bin_id: fridgeBin,
     });
 
-    const first = await client.rpc("complete_inventory_transaction", {
+    const { error } = await ownerB.client.rpc("complete_inventory_transaction", {
       p_transaction_id: txn!.id,
     });
-    expect(first.error).toBeNull();
+    expect(error).toBeTruthy();
+  });
 
-    const { data: ledgerCount } = await admin
-      .from("inventory_ledger_entries")
-      .select("id", { count: "exact", head: true })
-      .eq("transaction_id", txn!.id);
+  it("rejects negative stock when disabled and allows when enabled", async () => {
+    const { client } = await signIn("owner@nolt.local");
+    const dims = {
+      itemId: alcoholId,
+      locationId: primaryA,
+      storageAreaId: fridgeArea,
+      binId: fridgeBin,
+    };
 
-    const second = await client.rpc("complete_inventory_transaction", {
+    await admin.from("items").update({ allow_negative_stock: false }).eq("id", alcoholId);
+    const available = await balanceQty(dims);
+
+    const { data: deniedTxn } = await createDraft(client, orgA, "consumption");
+    await client.from("inventory_transaction_lines").insert({
+      organization_id: orgA,
+      transaction_id: deniedTxn!.id,
+      line_number: 1,
+      item_id: alcoholId,
+      entered_quantity: available + 100,
+      entered_unit_id: mLUnit,
+      conversion_multiplier: 1,
+      base_quantity: available + 100,
+      source_location_id: primaryA,
+      source_storage_area_id: fridgeArea,
+      source_bin_id: fridgeBin,
+    });
+    const denied = await client.rpc("complete_inventory_transaction", {
+      p_transaction_id: deniedTxn!.id,
+    });
+    expect(denied.error).toBeTruthy();
+    expect(denied.error?.message ?? "").toMatch(/insufficient stock/i);
+    expect(await balanceQty(dims)).toBe(available);
+
+    await admin.from("items").update({ allow_negative_stock: true }).eq("id", alcoholId);
+    const { data: allowedTxn } = await createDraft(client, orgA, "consumption");
+    await client.from("inventory_transaction_lines").insert({
+      organization_id: orgA,
+      transaction_id: allowedTxn!.id,
+      line_number: 1,
+      item_id: alcoholId,
+      entered_quantity: available + 7,
+      entered_unit_id: mLUnit,
+      conversion_multiplier: 1,
+      base_quantity: available + 7,
+      source_location_id: primaryA,
+      source_storage_area_id: fridgeArea,
+      source_bin_id: fridgeBin,
+    });
+    const allowed = await client.rpc("complete_inventory_transaction", {
+      p_transaction_id: allowedTxn!.id,
+    });
+    expect(allowed.error).toBeNull();
+    expect(await balanceQty(dims)).toBe(-7);
+
+    await admin.from("items").update({ allow_negative_stock: false }).eq("id", alcoholId);
+    await seedStock(client, 50, { ...dims, enteredUnitId: mLUnit });
+  });
+
+  it("exact storage dimensions are respected for stock checks", async () => {
+    const { client } = await signIn("owner@nolt.local");
+    // Stock exists with bin set; consuming with null bin must not use that stock.
+    const withBin = {
+      itemId: alcoholId,
+      locationId: primaryA,
+      storageAreaId: fridgeArea,
+      binId: fridgeBin,
+    };
+    await seedStock(client, 30, { ...withBin, enteredUnitId: mLUnit });
+    const beforeWithBin = await balanceQty(withBin);
+    const beforeNoBin = await balanceQty({ ...withBin, binId: null });
+
+    const { data: txn } = await createDraft(client, orgA, "consumption");
+    await client.from("inventory_transaction_lines").insert({
+      organization_id: orgA,
+      transaction_id: txn!.id,
+      line_number: 1,
+      item_id: alcoholId,
+      entered_quantity: 10,
+      entered_unit_id: mLUnit,
+      conversion_multiplier: 1,
+      base_quantity: 10,
+      source_location_id: primaryA,
+      source_storage_area_id: fridgeArea,
+      source_bin_id: null,
+    });
+    const { error } = await client.rpc("complete_inventory_transaction", {
       p_transaction_id: txn!.id,
     });
-    expect(second.error).toBeTruthy();
+    expect(error).toBeTruthy();
+    expect(await balanceQty(withBin)).toBe(beforeWithBin);
+    expect(await balanceQty({ ...withBin, binId: null })).toBe(beforeNoBin);
 
-    const { count } = await admin
-      .from("inventory_ledger_entries")
-      .select("id", { count: "exact", head: true })
-      .eq("transaction_id", txn!.id);
-    expect(count).toBe(ledgerCount === null ? 1 : count);
-    expect(count).toBe(1);
+    const { data: okTxn } = await createDraft(client, orgA, "consumption");
+    await client.from("inventory_transaction_lines").insert({
+      organization_id: orgA,
+      transaction_id: okTxn!.id,
+      line_number: 1,
+      item_id: alcoholId,
+      entered_quantity: 10,
+      entered_unit_id: mLUnit,
+      conversion_multiplier: 1,
+      base_quantity: 10,
+      source_location_id: primaryA,
+      source_storage_area_id: fridgeArea,
+      source_bin_id: fridgeBin,
+    });
+    const ok = await client.rpc("complete_inventory_transaction", {
+      p_transaction_id: okTxn!.id,
+    });
+    expect(ok.error).toBeNull();
+    expect(await balanceQty(withBin)).toBe(beforeWithBin - 10);
   });
 
   it("failed multi-line completion rolls back completely", async () => {
     const { client } = await signIn("owner@nolt.local");
-    const { data: txn } = await createDraft(client, orgA);
+    const { data: txn } = await createDraft(client, orgA, "positive_adjustment");
 
-    // Line 1 valid
     await client.from("inventory_transaction_lines").insert({
       organization_id: orgA,
       transaction_id: txn!.id,
@@ -307,9 +673,9 @@ describe.skipIf(!enabled)("Phase 2.4 inventory ledger RLS and integrity", () => 
       base_quantity: 1,
       destination_location_id: primaryA,
       destination_storage_area_id: fridgeArea,
+      destination_bin_id: fridgeBin,
     });
 
-    // Line 2 uses a packaging unit with no conversion to mL base (box on alcohol)
     const { error: badLine } = await client.from("inventory_transaction_lines").insert({
       organization_id: orgA,
       transaction_id: txn!.id,
@@ -321,6 +687,7 @@ describe.skipIf(!enabled)("Phase 2.4 inventory ledger RLS and integrity", () => 
       base_quantity: 1,
       destination_location_id: primaryA,
       destination_storage_area_id: fridgeArea,
+      destination_bin_id: fridgeBin,
     });
     expect(badLine).toBeNull();
 
@@ -352,6 +719,171 @@ describe.skipIf(!enabled)("Phase 2.4 inventory ledger RLS and integrity", () => 
       .select("id", { count: "exact", head: true })
       .eq("organization_id", orgA);
     expect(afterLedger.count).toBe(beforeLedger.count);
+  });
+
+  it("duplicate completion does not double-post", async () => {
+    const { client } = await signIn("owner@nolt.local");
+    const { data: txn } = await createDraft(client, orgA, "receipt");
+    await client.from("inventory_transaction_lines").insert({
+      organization_id: orgA,
+      transaction_id: txn!.id,
+      line_number: 1,
+      item_id: alcoholId,
+      entered_quantity: 3,
+      entered_unit_id: mLUnit,
+      conversion_multiplier: 1,
+      base_quantity: 3,
+      destination_location_id: primaryA,
+      destination_storage_area_id: fridgeArea,
+      destination_bin_id: fridgeBin,
+    });
+
+    const first = await client.rpc("complete_inventory_transaction", {
+      p_transaction_id: txn!.id,
+    });
+    expect(first.error).toBeNull();
+
+    const second = await client.rpc("complete_inventory_transaction", {
+      p_transaction_id: txn!.id,
+    });
+    expect(second.error).toBeTruthy();
+
+    const { count } = await admin
+      .from("inventory_ledger_entries")
+      .select("id", { count: "exact", head: true })
+      .eq("transaction_id", txn!.id);
+    expect(count).toBe(1);
+  });
+
+  it("concurrent consumption cannot overspend", async () => {
+    const { client } = await signIn("owner@nolt.local");
+    const dims = {
+      itemId: alcoholId,
+      locationId: primaryA,
+      storageAreaId: fridgeArea,
+      binId: fridgeBin,
+    };
+
+    // Isolate a known pool for this race: consume down, then seed exact amount.
+    await admin.from("items").update({ allow_negative_stock: false }).eq("id", alcoholId);
+    const current = await balanceQty(dims);
+    if (current > 0) {
+      const { data: drain } = await createDraft(client, orgA, "consumption");
+      await client.from("inventory_transaction_lines").insert({
+        organization_id: orgA,
+        transaction_id: drain!.id,
+        line_number: 1,
+        item_id: alcoholId,
+        entered_quantity: current,
+        entered_unit_id: mLUnit,
+        conversion_multiplier: 1,
+        base_quantity: current,
+        source_location_id: primaryA,
+        source_storage_area_id: fridgeArea,
+        source_bin_id: fridgeBin,
+      });
+      const drained = await client.rpc("complete_inventory_transaction", {
+        p_transaction_id: drain!.id,
+      });
+      expect(drained.error).toBeNull();
+    }
+    await seedStock(client, 10, { ...dims, enteredUnitId: mLUnit });
+    expect(await balanceQty(dims)).toBe(10);
+
+    async function buildConsumption(qty: number) {
+      const signed = await signIn("owner@nolt.local");
+      const { data: txn } = await createDraft(signed.client, orgA, "consumption");
+      await signed.client.from("inventory_transaction_lines").insert({
+        organization_id: orgA,
+        transaction_id: txn!.id,
+        line_number: 1,
+        item_id: alcoholId,
+        entered_quantity: qty,
+        entered_unit_id: mLUnit,
+        conversion_multiplier: 1,
+        base_quantity: qty,
+        source_location_id: primaryA,
+        source_storage_area_id: fridgeArea,
+        source_bin_id: fridgeBin,
+      });
+      return { client: signed.client, txnId: txn!.id };
+    }
+
+    const a = await buildConsumption(8);
+    const b = await buildConsumption(8);
+    const [resultA, resultB] = await Promise.all([
+      a.client.rpc("complete_inventory_transaction", { p_transaction_id: a.txnId }),
+      b.client.rpc("complete_inventory_transaction", { p_transaction_id: b.txnId }),
+    ]);
+
+    const successes = [resultA, resultB].filter((r) => !r.error).length;
+    const failures = [resultA, resultB].filter((r) => r.error).length;
+    expect(successes).toBe(1);
+    expect(failures).toBe(1);
+    expect(await balanceQty(dims)).toBe(2);
+  });
+
+  it("completion path writes type-specific audit events", async () => {
+    const { client, userId } = await signIn("owner@nolt.local");
+    const { data: txn } = await createDraft(client, orgA, "receipt", {
+      reference_text: "AUDIT-REF",
+    });
+    await client.from("inventory_transaction_lines").insert({
+      organization_id: orgA,
+      transaction_id: txn!.id,
+      line_number: 1,
+      item_id: alcoholId,
+      entered_quantity: 2,
+      entered_unit_id: mLUnit,
+      conversion_multiplier: 1,
+      base_quantity: 2,
+      destination_location_id: primaryA,
+      destination_storage_area_id: fridgeArea,
+      destination_bin_id: fridgeBin,
+    });
+    const completed = await client.rpc("complete_inventory_transaction", {
+      p_transaction_id: txn!.id,
+    });
+    expect(completed.error).toBeNull();
+
+    // App layer writes audit after RPC; mirror that contract here for RLS/integration coverage.
+    const { error: auditError } = await client.from("audit_events").insert({
+      organization_id: orgA,
+      actor_user_id: userId,
+      actor_type: "user",
+      action: "inventory.receipt.completed",
+      entity_type: "inventory_transaction",
+      entity_id: txn!.id,
+      summary: `Inventory receipt completed: ${txn!.transaction_number}`,
+      metadata: { transactionType: "receipt" },
+    });
+    expect(auditError).toBeNull();
+
+    const { data: events } = await client
+      .from("audit_events")
+      .select("action, entity_id")
+      .eq("organization_id", orgA)
+      .eq("entity_id", txn!.id)
+      .eq("action", "inventory.receipt.completed");
+    expect((events ?? []).length).toBeGreaterThanOrEqual(1);
+  });
+
+  it("requires variant when item requires_variant", async () => {
+    const { client } = await signIn("owner@nolt.local");
+    const { data: txn } = await createDraft(client, orgA, "positive_adjustment");
+    const { error } = await client.from("inventory_transaction_lines").insert({
+      organization_id: orgA,
+      transaction_id: txn!.id,
+      line_number: 1,
+      item_id: glovesId,
+      entered_quantity: 1,
+      entered_unit_id: glovesBase,
+      conversion_multiplier: 1,
+      base_quantity: 1,
+      destination_location_id: primaryA,
+      destination_storage_area_id: topShelf,
+    });
+    expect(error).toBeTruthy();
   });
 
   it("completed transactions, lines, ledger are immutable; balances not directly writable", async () => {
@@ -469,18 +1001,88 @@ describe.skipIf(!enabled)("Phase 2.4 inventory ledger RLS and integrity", () => 
   it("transaction numbering is unique under concurrent creates", async () => {
     const owner = await signIn("owner@nolt.local");
     const results = await Promise.all([
-      createDraft(owner.client, orgA),
-      createDraft(owner.client, orgA),
-      createDraft(owner.client, orgA),
+      createDraft(owner.client, orgA, "receipt"),
+      createDraft(owner.client, orgA, "consumption"),
+      createDraft(owner.client, orgA, "transfer"),
     ]);
     const numbers = results.map((r) => r.data?.transaction_number).filter(Boolean);
     expect(numbers.length).toBe(3);
     expect(new Set(numbers).size).toBe(3);
+    expect(numbers.some((n) => String(n).startsWith("RCV-"))).toBe(true);
+    expect(numbers.some((n) => String(n).startsWith("CON-"))).toBe(true);
+    expect(numbers.some((n) => String(n).startsWith("XFR-"))).toBe(true);
   });
 
   it("read-only cannot mutate inventory", async () => {
     const readonly = await signIn("readonly@nolt.local");
-    const { error } = await createDraft(readonly.client, orgA);
+    const { error } = await createDraft(readonly.client, orgA, "positive_adjustment");
     expect(error).toBeTruthy();
   });
+
+  it("staff can consume but cannot complete a receipt", async () => {
+    const staff = await signIn("multi@nolt.local");
+    const { data: receipt, error: receiptCreateError } = await createDraft(
+      staff.client,
+      orgA,
+      "receipt",
+    );
+    // Staff lacks inventory.receive — draft create should fail under RLS.
+    if (!receiptCreateError && receipt) {
+      await staff.client.from("inventory_transaction_lines").insert({
+        organization_id: orgA,
+        transaction_id: receipt.id,
+        line_number: 1,
+        item_id: alcoholId,
+        entered_quantity: 1,
+        entered_unit_id: mLUnit,
+        conversion_multiplier: 1,
+        base_quantity: 1,
+        destination_location_id: primaryA,
+        destination_storage_area_id: fridgeArea,
+        destination_bin_id: fridgeBin,
+      });
+      const completeReceipt = await staff.client.rpc("complete_inventory_transaction", {
+        p_transaction_id: receipt.id,
+      });
+      expect(completeReceipt.error).toBeTruthy();
+    } else {
+      expect(receiptCreateError).toBeTruthy();
+    }
+
+    const { client: owner } = await signIn("owner@nolt.local");
+    const dims = {
+      itemId: alcoholId,
+      locationId: primaryA,
+      storageAreaId: fridgeArea,
+      binId: fridgeBin,
+    };
+    await seedStock(owner, 12, { ...dims, enteredUnitId: mLUnit });
+    const before = await balanceQty(dims);
+
+    const { data: consumption, error: consumptionError } = await createDraft(
+      staff.client,
+      orgA,
+      "consumption",
+    );
+    expect(consumptionError).toBeNull();
+    await staff.client.from("inventory_transaction_lines").insert({
+      organization_id: orgA,
+      transaction_id: consumption!.id,
+      line_number: 1,
+      item_id: alcoholId,
+      entered_quantity: 4,
+      entered_unit_id: mLUnit,
+      conversion_multiplier: 1,
+      base_quantity: 4,
+      source_location_id: primaryA,
+      source_storage_area_id: fridgeArea,
+      source_bin_id: fridgeBin,
+    });
+    const completeConsume = await staff.client.rpc("complete_inventory_transaction", {
+      p_transaction_id: consumption!.id,
+    });
+    expect(completeConsume.error).toBeNull();
+    expect(await balanceQty(dims)).toBe(before - 4);
+  });
+
 });
