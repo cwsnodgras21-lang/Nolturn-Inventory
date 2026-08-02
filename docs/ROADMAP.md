@@ -117,11 +117,20 @@ Phase 2.1–2.6 delivered catalog, storage, ledger, movements, and reversals.
 - [x] Resolve/cancel without releasing quarantined lots
 - [x] `inventory.recalls.read` / `inventory.recalls.manage` + UI + RLS tests
 
+## Phase 3.5 — Reorder rules and restock planning
+
+- [x] Item default + location override reorder rules
+- [x] Minimum / target / optional fixed reorder quantity + preferred supplier
+- [x] Low-stock and out-of-stock views from usable balances
+- [x] Restock planning workspace → draft POs (grouped by supplier; idempotent)
+- [x] `inventory.reorder.read` / `inventory.reorder.manage` + UI + RLS tests
+
 ## Phase 3 (remaining)
 
 - Serial tracking contract
 - Cycle count scheduling
 - Expiration alerts / automated FEFO (future)
+- Demand forecasting / Nolt recommendations (future)
 
 ## Phase 4 — Procurement (advanced)
 

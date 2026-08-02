@@ -971,6 +971,103 @@ export type Database = {
         };
         Relationships: [];
       };
+      reorder_rules: {
+        Row: {
+          id: string;
+          organization_id: string;
+          item_id: string;
+          variant_id: string | null;
+          location_id: string | null;
+          minimum_quantity: number;
+          target_quantity: number;
+          reorder_quantity: number | null;
+          preferred_supplier_id: string | null;
+          status: string;
+          notes: string | null;
+          created_by: string | null;
+        } & Timestamps;
+        Insert: {
+          id?: string;
+          organization_id: string;
+          item_id: string;
+          variant_id?: string | null;
+          location_id?: string | null;
+          minimum_quantity: number;
+          target_quantity: number;
+          reorder_quantity?: number | null;
+          preferred_supplier_id?: string | null;
+          status?: string;
+          notes?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          item_id?: string;
+          variant_id?: string | null;
+          location_id?: string | null;
+          minimum_quantity?: number;
+          target_quantity?: number;
+          reorder_quantity?: number | null;
+          preferred_supplier_id?: string | null;
+          status?: string;
+          notes?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      restock_plan_requests: {
+        Row: {
+          id: string;
+          organization_id: string;
+          request_key: string;
+          created_by: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          request_key: string;
+          created_by?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          request_key?: string;
+          created_by?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      restock_plan_request_orders: {
+        Row: {
+          id: string;
+          organization_id: string;
+          request_id: string;
+          purchase_order_id: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          request_id: string;
+          purchase_order_id: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          request_id?: string;
+          purchase_order_id?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       count_sessions: {
         Row: {
           id: string;

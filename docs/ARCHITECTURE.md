@@ -56,6 +56,16 @@ Domain under `src/modules/recalls/`. Recalls identify affected lots and quaranti
 - Resolve/cancel closes the recall record without releasing quarantined stock.
 - Affected stock views honor restricted location access.
 
+## Reorder rules and restock planning (Phase 3.5)
+
+Domain under `src/modules/reorder/`. Deterministic monitoring only — no AI, forecasting, or automatic PO submission.
+
+- `reorder_rules`: default item rule (`location_id` null) and optional location overrides.
+- Restock suggestions compare usable available quantity to minimum/target (or fixed reorder qty).
+- Usable stock excludes quarantined/non-active lots and past-expiration lots.
+- Draft POs reuse the purchasing model; `restock_plan_requests` provides click idempotency.
+- Location-restricted members only see/manage location rules and suggestions for accessible locations.
+
 ## Assumptions
 
 1. Shared schema multi-tenancy with `organization_id` ownership.

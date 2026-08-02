@@ -1,7 +1,7 @@
 # Data dictionary
 
 **Last reviewed:** 2026-08-02  
-**Status:** Phase 3.4 schema applied
+**Status:** Phase 3.5 schema applied
 
 ## Implemented tables
 
@@ -33,6 +33,9 @@
 | inventory_lots | Lot masters: number, optional expiration, status, notes |
 | inventory_recalls | Recall headers: number, source, severity, status, announced date, notes, closed_at |
 | inventory_recall_lots | Recall ↔ lot attachments; unique `(recall_id, lot_id)` |
+| reorder_rules | Default (`location_id` null) and location-specific reorder rules; min/target/optional reorder qty; preferred supplier |
+| restock_plan_requests | Idempotency keys for restock → draft PO creation; unique `(organization_id, request_key)` |
+| restock_plan_request_orders | Links a restock request to created purchase orders |
 | count_sessions | Count headers; statuses draft/in_progress/ready_for_review/completed/cancelled; blind flag |
 | count_session_locations | Assigned locations for a session |
 | count_lines | Frozen expected qty, counted qty, variance, review status, optional reconciliation txn link, optional `lot_id` |
@@ -44,7 +47,7 @@
 
 ## Permission keys
 
-See `src/lib/permissions/catalog.ts`. Includes inventory/count/purchasing/lots keys plus `inventory.recalls.read` and `inventory.recalls.manage`.
+See `src/lib/permissions/catalog.ts`. Includes inventory/count/purchasing/lots/recalls keys plus `inventory.reorder.read` and `inventory.reorder.manage`.
 
 ## RPCs
 
@@ -66,4 +69,4 @@ See `src/lib/permissions/catalog.ts`. Includes inventory/count/purchasing/lots k
 
 ## Planned (not created)
 
-Serials, patient tracing, external recall feeds, purchase requests/approvals, AP, modules, billing, Nolt execution tables.
+Serials, patient tracing, external recall feeds, forecasting tables, purchase requests/approvals, AP, modules, billing, Nolt execution tables.
